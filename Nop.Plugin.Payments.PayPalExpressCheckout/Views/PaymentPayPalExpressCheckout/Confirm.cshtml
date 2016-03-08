@@ -1,0 +1,54 @@
+﻿@model Nop.Plugin.Payments.PayPalExpressCheckout.Models.CheckoutConfirmModel
+@using Nop.Web.Framework
+@using Nop.Web.Framework.UI
+@{
+    Layout = "~/Views/Shared/_ColumnsOne.cshtml";
+
+    //title
+    Html.AddTitleParts(T("PageTitle.Checkout").Text);
+}
+<div class="page checkout-page">
+    <div class="page-title">
+        <h1>@T("Checkout.ConfirmYourOrder")</h1>
+    </div>
+    <div class="page-body checkout-data">
+        @Html.Widget("checkout_confirm_top")
+        <div class="section confirm-order">
+            @using (Html.BeginRouteForm("Plugin.Payments.PayPalExpressCheckout.Confirm", FormMethod.Post, new { id = "confirm-order-form" }))
+            {
+                <script type="text/javascript">
+                    $(document).ready(function () {
+                        $('#confirm-order-form').submit(function () {
+                            $('input[type=submit]', this).attr('disabled', 'disabled');
+                        });
+                    });
+                </script>
+                if (!String.IsNullOrEmpty(Model.MinOrderTotalWarning))
+                {
+                <span class="min-order-warning">@Model.MinOrderTotalWarning</span>
+                }
+                else
+                {
+                <div class="buttons">
+                    <input type="submit" name="nextstep" value="@T("Checkout.ConfirmButton")" class="button-1 confirm-order-next-step-button" />
+                </div>
+                }
+                if (Model.Warnings.Count > 0)
+                {
+                <div class="message-error">
+                    <ul>
+                        @foreach (var warning in Model.Warnings)
+                        {
+                            <li>@warning</li>
+                        }
+                    </ul>
+                </div>
+                }
+            }
+        </div>
+        @Html.Widget("checkout_confirm_bottom")
+        <div class="order-summary-body">
+            @Html.Action("OrderSummary", "ShoppingCart", new { prepareAndDisplayOrderReviewData = true })
+        </div>
+    </div>
+</div>

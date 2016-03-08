@@ -1,0 +1,8 @@
+﻿Group: Payment methods
+FriendlyName: PayPal Express Checkout
+SystemName: Payments.PayPalExpressCheckout
+Version: 1.02
+SupportedVersions: 3.70
+Author: Thought Consultancy - http://www.thought.co.uk
+DisplayOrder: 1
+FileName: Nop.Plugin.Payments.PayPalExpressCheckout.dll

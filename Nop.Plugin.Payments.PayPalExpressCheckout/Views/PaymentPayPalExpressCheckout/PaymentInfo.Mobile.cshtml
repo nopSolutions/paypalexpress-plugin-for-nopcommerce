@@ -1,0 +1,15 @@
+﻿@{ var error = TempData["paypal-ec-error"]; }
+
+<img id="payPalExpressCheckoutImage" alt="" src="/Plugins/Payments.PayPalExpressCheckout/Images/mobile-checkout.png" style="cursor:pointer;" />
+
+@if (error != null)
+{
+    <p class="error">@error</p>
+}
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#payPalExpressCheckoutImage').click(function () {
+            window.location.href = '@Url.RouteUrl("Plugin.Payments.PayPalExpressCheckout.SubmitButton")';
+        });
+    });
+</script>

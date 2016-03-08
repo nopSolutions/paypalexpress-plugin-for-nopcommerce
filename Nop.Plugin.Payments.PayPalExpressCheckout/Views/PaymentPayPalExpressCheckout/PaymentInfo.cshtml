@@ -1,0 +1,15 @@
+﻿@{ var error = TempData["paypal-ec-error"]; }
+
+<img id="payPalExpressCheckoutImage" alt="" src="https://www.paypalobjects.com/en_GB/i/btn/btn_xpressCheckout.gif" style="cursor:pointer;" />
+
+@if (error != null)
+{
+    <p class="error">@error</p>
+}
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#payPalExpressCheckoutImage').click(function () {
+            setLocation('@Url.RouteUrl("Plugin.Payments.PayPalExpressCheckout.SubmitButton")');
+        });
+    });
+</script>

@@ -58,6 +58,9 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
             );
         }
 
-        public int Priority { get { return 0; } }
+        public int Priority
+        {
+            get { return 0; }
+        }
     }
 }

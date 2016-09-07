@@ -16,49 +16,94 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
 {
     public class PaymentPayPalExpressCheckoutController : BasePaymentController
     {
-        private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
-        private readonly ISettingService _settingService;
-        private readonly IOrderProcessingService _orderProcessingService;
-        private readonly IPayPalExpressCheckoutService _payPalExpressCheckoutService;
-        private readonly IPayPalExpressCheckoutShippingMethodService _payPalExpressCheckoutShippingMethodService;
+        #region Fields
+
+        private readonly IOrderProcessingService _orderProcessingService;        
         private readonly IPayPalExpressCheckoutConfirmOrderService _payPalExpressCheckoutConfirmOrderService;
         private readonly IPayPalExpressCheckoutPlaceOrderService _payPalExpressCheckoutPlaceOrderService;
-        private readonly IPayPalRedirectionService _payPalRedirectionService;
+        private readonly IPayPalExpressCheckoutService _payPalExpressCheckoutService;
+        private readonly IPayPalExpressCheckoutShippingMethodService _payPalExpressCheckoutShippingMethodService;
         private readonly IPayPalIPNService _payPalIPNService;
+        private readonly IPayPalRedirectionService _payPalRedirectionService;
+        private readonly ISettingService _settingService;
+        private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
 
-        public PaymentPayPalExpressCheckoutController(PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings,
-            ISettingService settingService,
-            IOrderProcessingService orderProcessingService,
-            IPayPalExpressCheckoutService payPalExpressCheckoutService,
-            IPayPalExpressCheckoutShippingMethodService payPalExpressCheckoutShippingMethodService,
+        #endregion
+
+        #region Ctor
+
+        public PaymentPayPalExpressCheckoutController(IOrderProcessingService orderProcessingService,
             IPayPalExpressCheckoutConfirmOrderService payPalExpressCheckoutConfirmOrderService,
             IPayPalExpressCheckoutPlaceOrderService payPalExpressCheckoutPlaceOrderService,
+            IPayPalExpressCheckoutService payPalExpressCheckoutService,
+            IPayPalExpressCheckoutShippingMethodService payPalExpressCheckoutShippingMethodService,
+            IPayPalIPNService payPalIPNService,
             IPayPalRedirectionService payPalRedirectionService,
-            IPayPalIPNService payPalIPNService
-            )
+            ISettingService settingService,
+            PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings)
         {
-            _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
-            _settingService = settingService;
             _orderProcessingService = orderProcessingService;
-            _payPalExpressCheckoutService = payPalExpressCheckoutService;
-            _payPalExpressCheckoutShippingMethodService = payPalExpressCheckoutShippingMethodService;
             _payPalExpressCheckoutConfirmOrderService = payPalExpressCheckoutConfirmOrderService;
             _payPalExpressCheckoutPlaceOrderService = payPalExpressCheckoutPlaceOrderService;
-            _payPalRedirectionService = payPalRedirectionService;
+            _payPalExpressCheckoutService = payPalExpressCheckoutService;
+            _payPalExpressCheckoutShippingMethodService = payPalExpressCheckoutShippingMethodService;
             _payPalIPNService = payPalIPNService;
+            _payPalRedirectionService = payPalRedirectionService;
+            _settingService = settingService;
+            _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
         }
 
-        public override IList<string> ValidatePaymentForm(FormCollection form)
+        #endregion
+
+        #region Utilities 
+
+        /// <summary>
+        /// Check that logo image is valid
+        /// </summary>
+        /// <param name="logoImageUrl">URL</param>
+        /// <param name="validationErrors">Errors</param>
+        /// <returns>True if logo image is valid; otherwise false</returns>
+        protected bool IsLogoImageValid(string logoImageUrl, out List<string> validationErrors)
         {
-            var warnings = new List<string>();
-            return warnings;
+            validationErrors = new List<string>();
+            if (string.IsNullOrWhiteSpace(logoImageUrl))
+                return true;
+
+            Uri result;
+            if (!Uri.TryCreate(logoImageUrl, UriKind.Absolute, out result))
+            {
+                validationErrors.Add("Logo Image URL is not in a valid format");
+                return false;
+            }
+
+            if (result.Scheme != "https")
+            {
+                validationErrors.Add("Logo Image must be hosted on https");
+                return false;
+            }
+
+            try
+            {
+                using (var imageStream = HttpWebRequest.Create(result).GetResponse().GetResponseStream())
+                using (var bitmap = new Bitmap(imageStream))
+                {
+                    if (bitmap.Width > 190)
+                        validationErrors.Add("Image must be less than or equal to 190 px in width");
+                    if (bitmap.Height > 60)
+                        validationErrors.Add("Image must be less than or equal to 60 px in height");
+                    return !validationErrors.Any();
+                }
+            }
+            catch
+            {
+                validationErrors.Add("Logo image was not a valid ");
+                return false;
+            }
         }
 
-        public override ProcessPaymentRequest GetPaymentInfo(FormCollection form)
-        {
-            var paymentInfo = new ProcessPaymentRequest();
-            return paymentInfo;
-        }
+        #endregion
+
+        #region Methods
 
         [AdminAuthorize]
         [ChildActionOnly]
@@ -69,15 +114,14 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
                                 ApiSignature = _payPalExpressCheckoutPaymentSettings.ApiSignature,
                                 LogoImageURL = _payPalExpressCheckoutPaymentSettings.LogoImageURL,
                                 CartBorderColor = _payPalExpressCheckoutPaymentSettings.CartBorderColor,
-                                DoNotHaveBusinessAccount =
-                                    _payPalExpressCheckoutPaymentSettings.DoNotHaveBusinessAccount,
+                                DoNotHaveBusinessAccount = _payPalExpressCheckoutPaymentSettings.DoNotHaveBusinessAccount,
                                 EmailAddress = _payPalExpressCheckoutPaymentSettings.EmailAddress,
                                 EnableDebugLogging = _payPalExpressCheckoutPaymentSettings.EnableDebugLogging,
                                 IsLive = _payPalExpressCheckoutPaymentSettings.IsLive,
                                 Password = _payPalExpressCheckoutPaymentSettings.Password,
                                 Username = _payPalExpressCheckoutPaymentSettings.Username,
-                                HandlingFee = _payPalExpressCheckoutPaymentSettings.HandlingFee,
-                                HandlingFeeIsPercentage = _payPalExpressCheckoutPaymentSettings.HandlingFeeIsPercentage,
+                                AdditionalFee = _payPalExpressCheckoutPaymentSettings.AdditionalFee,
+                                AdditionalFeePercentage = _payPalExpressCheckoutPaymentSettings.AdditionalFeePercentage,
                                 LocaleCode = _payPalExpressCheckoutPaymentSettings.LocaleCode,
                                 PaymentAction = _payPalExpressCheckoutPaymentSettings.PaymentAction,
                                 RequireConfirmedShippingAddress = _payPalExpressCheckoutPaymentSettings.RequireConfirmedShippingAddress,
@@ -87,6 +131,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
 
             return View("~/Plugins/Payments.PayPalExpressCheckout/Views/PaymentPayPalExpressCheckout/Configure.cshtml", model);
         }
+
         [HttpPost]
         [AdminAuthorize]
         [ChildActionOnly]
@@ -94,6 +139,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
         {
             if (!ModelState.IsValid)
                 return Configure();
+
             var validationErrors = new List<string>();
             if (IsLogoImageValid(model.LogoImageURL, out validationErrors))
             {
@@ -106,8 +152,8 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
                 _payPalExpressCheckoutPaymentSettings.IsLive = model.IsLive;
                 _payPalExpressCheckoutPaymentSettings.Password = model.Password;
                 _payPalExpressCheckoutPaymentSettings.Username = model.Username;
-                _payPalExpressCheckoutPaymentSettings.HandlingFee = model.HandlingFee;
-                _payPalExpressCheckoutPaymentSettings.HandlingFeeIsPercentage = model.HandlingFeeIsPercentage;
+                _payPalExpressCheckoutPaymentSettings.AdditionalFee = model.AdditionalFee;
+                _payPalExpressCheckoutPaymentSettings.AdditionalFeePercentage = model.AdditionalFeePercentage;
                 _payPalExpressCheckoutPaymentSettings.LocaleCode = model.LocaleCode;
                 _payPalExpressCheckoutPaymentSettings.PaymentAction = model.PaymentAction;
                 _payPalExpressCheckoutPaymentSettings.RequireConfirmedShippingAddress =
@@ -128,38 +174,16 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             return View("~/Plugins/Payments.PayPalExpressCheckout/Views/PaymentPayPalExpressCheckout/Configure.cshtml", model);
         }
 
-        private bool IsLogoImageValid(string logoImageUrl, out List<string> validationErrors)
+        [NonAction]
+        public override IList<string> ValidatePaymentForm(FormCollection form)
         {
-            validationErrors = new List<string>();
-            if (string.IsNullOrWhiteSpace(logoImageUrl)) return true;
-            Uri result;
-            if (!Uri.TryCreate(logoImageUrl, UriKind.Absolute, out result))
-            {
-                validationErrors.Add("Logo Image URL is not in a valid format");
-                return false;
-            }
-            if (result.Scheme != "https")
-            {
-                validationErrors.Add("Logo Image must be hosted on https");
-                return false;
-            }
-            try
-            {
-                using (var imageStream = HttpWebRequest.Create(result).GetResponse().GetResponseStream())
-                using (var bitmap = new Bitmap(imageStream))
-                {
-                    if (bitmap.Width > 190)
-                        validationErrors.Add("Image must be less than or equal to 190 px in width");
-                    if (bitmap.Height > 60)
-                        validationErrors.Add("Image must be less than or equal to 60 px in height");
-                    return !validationErrors.Any();
-                }
-            }
-            catch
-            {
-                validationErrors.Add("Logo image was not a valid ");
-                return false;
-            }
+            return new List<string>();
+        }
+
+        [NonAction]
+        public override ProcessPaymentRequest GetPaymentInfo(FormCollection form)
+        {
+            return new ProcessPaymentRequest();
         }
 
         [ChildActionOnly]
@@ -169,7 +193,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             if (cart.Count == 0)
                 return Content("");
 
-
             bool minOrderSubtotalAmountOk = _orderProcessingService.ValidateMinOrderSubtotalAmount(cart);
             if (!minOrderSubtotalAmountOk)
                 return Content("");
@@ -178,6 +201,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             {
                 ButtonImageLocation = "https://www.paypalobjects.com/en_GB/i/btn/btn_xpressCheckout.gif",
             };
+
             return View("~/Plugins/Payments.PayPalExpressCheckout/Views/PaymentPayPalExpressCheckout/PaymentInfo.cshtml", model);
         }
 
@@ -201,14 +225,12 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             var cart = _payPalExpressCheckoutService.GetCart();
 
             if (!cart.RequiresShipping())
-            {
                 return RedirectToAction("Confirm");
-            }
 
             var model = _payPalExpressCheckoutShippingMethodService.PrepareShippingMethodModel(cart);
+
             return View("~/Plugins/Payments.PayPalExpressCheckout/Views/PaymentPayPalExpressCheckout/SetShippingMethod.cshtml", model);
         }
-
 
         [HttpPost, ActionName("SetShippingMethod")]
         [ValidateInput(false)]
@@ -229,6 +251,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             }
 
             var success = _payPalExpressCheckoutShippingMethodService.SetShippingMethod(cart, shippingoption);
+
             return RedirectToAction(success ? "Confirm" : "SetShippingMethod");
         }
 
@@ -244,6 +267,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
 
             //model
             var model = _payPalExpressCheckoutConfirmOrderService.PrepareConfirmOrderModel(cart);
+
             return View("~/Plugins/Payments.PayPalExpressCheckout/Views/PaymentPayPalExpressCheckout/Confirm.cshtml", model);
         }
 
@@ -263,8 +287,10 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             var checkoutPlaceOrderModel = _payPalExpressCheckoutPlaceOrderService.PlaceOrder();
             if (checkoutPlaceOrderModel.RedirectToCart)
                 return RedirectToRoute("ShoppingCart");
+
             if (checkoutPlaceOrderModel.IsRedirected)
                 return Content("Redirected");
+
             if (checkoutPlaceOrderModel.CompletedId.HasValue)
                 return RedirectToRoute("CheckoutCompleted", new { orderId = checkoutPlaceOrderModel.CompletedId });
 
@@ -283,5 +309,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             //nothing should be rendered to visitor
             return Content("");
         }
+
+        #endregion
     }
 }

@@ -18,19 +18,24 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         private readonly IStoreService _storeService;
         private readonly IOrderService _orderService;
         private readonly IPayPalCurrencyCodeParser _payPalCurrencyCodeParser;
+        private readonly IWorkContext _workContext;
 
-        public PayPalRecurringPaymentsService(ICustomerService customerService, IStoreService storeService, IOrderService orderService, IPayPalCurrencyCodeParser payPalCurrencyCodeParser)
+        public PayPalRecurringPaymentsService(ICustomerService customerService, IStoreService storeService, IOrderService orderService, IPayPalCurrencyCodeParser payPalCurrencyCodeParser,
+            IWorkContext workContext)
         {
             _customerService = customerService;
             _storeService = storeService;
             _orderService = orderService;
             _payPalCurrencyCodeParser = payPalCurrencyCodeParser;
+            this._workContext = workContext;
         }
 
         public CreateRecurringPaymentsProfileRequestDetailsType GetCreateRecurringPaymentProfileRequestDetails(
             ProcessPaymentRequest processPaymentRequest)
         {
             var details = new CreateRecurringPaymentsProfileRequestDetailsType();
+
+            details.Token = processPaymentRequest.CustomValues["PaypalToken"].ToString();
 
             var customer = _customerService.GetCustomerById(processPaymentRequest.CustomerId);
             details.CreditCard = new CreditCardDetailsType
@@ -78,8 +83,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             var store = _storeService.GetStoreById(processPaymentRequest.StoreId);
             var storeName = store == null ? string.Empty : store.Name;
             details.ScheduleDetails.Description = string.Format("{0} - {1}", storeName, "recurring payment");
-            var order = _orderService.GetOrderByGuid(processPaymentRequest.OrderGuid);
-            var currencyCodeType = _payPalCurrencyCodeParser.GetCurrencyCodeType(order.CustomerCurrencyCode);
+            var currencyCodeType = _payPalCurrencyCodeParser.GetCurrencyCodeType(_workContext.WorkingCurrency);
             details.ScheduleDetails.PaymentPeriod = new BillingPeriodDetailsType
                                                         {
                                                             Amount = processPaymentRequest.OrderTotal.GetBasicAmountType(currencyCodeType),
@@ -110,20 +114,17 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
         protected CountryCodeType GetPaypalCountryCodeType(Country country)
         {
-            CountryCodeType payerCountry = CountryCodeType.US;
-            try
-            {
-                payerCountry = (CountryCodeType)Enum.Parse(typeof(CountryCodeType), country.TwoLetterIsoCode);
-            }
-            catch
-            {
-            }
+            var payerCountry = CountryCodeType.US;
+            Enum.TryParse(country.TwoLetterIsoCode, out payerCountry);
+
             return payerCountry;
         }
 
         protected CreditCardTypeType GetPaypalCreditCardType(string creditCardType)
         {
-            CreditCardTypeType creditCardTypeType = (CreditCardTypeType)Enum.Parse(typeof(CreditCardTypeType), creditCardType);
+            var creditCardTypeType = CreditCardTypeType.Visa;
+            Enum.TryParse(creditCardType, out creditCardTypeType);
+
             return creditCardTypeType;
         }
     }

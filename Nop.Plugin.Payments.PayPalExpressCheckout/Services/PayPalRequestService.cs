@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
@@ -154,9 +153,9 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
         public DoVoidReq GetVoidRequest(VoidPaymentRequest voidPaymentRequest)
         {
-            string transactionId = voidPaymentRequest.Order.AuthorizationTransactionId;
+            string transactionId = voidPaymentRequest.Order.CaptureTransactionId;
             if (String.IsNullOrEmpty(transactionId))
-                transactionId = voidPaymentRequest.Order.CaptureTransactionId;
+                transactionId = voidPaymentRequest.Order.AuthorizationTransactionId;
 
             return new DoVoidReq
             {

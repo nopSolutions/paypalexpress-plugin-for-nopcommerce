@@ -48,23 +48,23 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             var currencyCode = _payPalCurrencyCodeParser.GetCurrencyCodeType(_workContext.WorkingCurrency);
 
             decimal orderTotalDiscountAmount;
-            Discount appliedDiscount;
+            List<Discount> appliedDiscounts;
             int redeemedRewardPoints;
             decimal redeemedRewardPointsAmount;
             List<AppliedGiftCard> appliedGiftCards;
             var orderTotalWithDiscount = _payPalCartItemService.GetCartTotal(cart, out orderTotalDiscountAmount,
-                out appliedDiscount,
+                out appliedDiscounts,
                 out redeemedRewardPoints,
                 out redeemedRewardPointsAmount,
                 out appliedGiftCards);
 
             decimal subTotalWithDiscount;
             decimal subTotalWithoutDiscount;
-            Discount subTotalAppliedDiscount;
+            List<Discount> subTotalAppliedDiscounts;
             decimal subTotalDiscountAmount;
             var itemTotalWithDiscount = _payPalCartItemService.GetCartItemTotal(cart,
                 out subTotalDiscountAmount,
-                out subTotalAppliedDiscount,
+                out subTotalAppliedDiscounts,
                 out subTotalWithoutDiscount,
                 out subTotalWithDiscount);
 

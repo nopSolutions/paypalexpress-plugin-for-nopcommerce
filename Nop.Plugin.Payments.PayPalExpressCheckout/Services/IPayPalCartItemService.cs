@@ -15,9 +15,9 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         PaymentDetailsItemType CreatePaymentItem(ShoppingCartItem item);
 
         decimal GetCartTotal(IList<ShoppingCartItem> cart, out decimal orderTotalDiscountAmount,
-                             out Discount appliedDiscount, out int redeemedRewardPoints,
+                             out List<Discount> appliedDiscounts, out int redeemedRewardPoints,
                              out decimal redeemedRewardPointsAmount, out List<AppliedGiftCard> appliedGiftCards);
 
-        decimal GetCartItemTotal(IList<ShoppingCartItem> cart, out decimal subTotalDiscountAmount, out Discount subTotalAppliedDiscount, out decimal subTotalWithoutDiscount, out decimal subTotalWithDiscount);
+        decimal GetCartItemTotal(IList<ShoppingCartItem> cart, out decimal subTotalDiscountAmount, out List<Discount> subTotalAppliedDiscounts, out decimal subTotalWithoutDiscount, out decimal subTotalWithDiscount);
     }
 }

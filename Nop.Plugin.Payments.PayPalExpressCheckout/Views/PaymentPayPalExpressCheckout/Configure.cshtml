@@ -4,157 +4,168 @@
 @model ConfigurationModel
 @using Nop.Plugin.Payments.PayPalExpressCheckout.Models;
 @using Nop.Web.Framework;
+
 @using (Html.BeginForm())
 {
     @Html.AntiForgeryToken()
     @Html.ValidationSummary()
-    <table class="adminContent">
-        <tr>
-            <td class="adminTitle">
-                @Html.NopLabelFor(model => model.DoNotHaveBusinessAccount):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.DoNotHaveBusinessAccount)
-                @Html.ValidationMessageFor(model => model.DoNotHaveBusinessAccount)
-            </td>
-        </tr>
-        <tr class="have-business-account">
-            <td class="adminTitle">
-                @Html.NopLabelFor(model => model.ApiSignature):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.ApiSignature)
-                @Html.ValidationMessageFor(model => model.ApiSignature)
-            </td>
-        </tr>
-        <tr class="have-business-account">
-            <td class="adminTitle">
-                @Html.NopLabelFor(model => model.Username):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.Username)
-                @Html.ValidationMessageFor(model => model.Username)
-            </td>
-        </tr>
-        <tr class="have-business-account">
-            <td class="adminTitle">
-                @Html.NopLabelFor(model => model.Password):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.Password)
-                @Html.ValidationMessageFor(model => model.Password)
-            </td>
-        </tr>
-        <tr class="do-not-have-business-account">
-            <td class="adminTitle">
-                @Html.NopLabelFor(model => model.EmailAddress):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.EmailAddress)
-                @Html.ValidationMessageFor(model => model.EmailAddress)
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.NopLabelFor(model => model.IsLive):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.IsLive)
-                @Html.ValidationMessageFor(model => model.IsLive)
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.NopLabelFor(model => model.LogoImageURL):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.LogoImageURL)
-                @Html.ValidationMessageFor(model => model.LogoImageURL)
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.NopLabelFor(model => model.CartBorderColor):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.CartBorderColor)
-                @Html.ValidationMessageFor(model => model.CartBorderColor)
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.NopLabelFor(model => model.LocaleCode):
-            </td>
-            <td class="adminData">
-                @Html.DropDownListFor(model => model.LocaleCode, Model.LocaleOptions)
-                @Html.ValidationMessageFor(model => model.LocaleCode)
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.NopLabelFor(model => model.RequireConfirmedShippingAddress):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.RequireConfirmedShippingAddress)
-                @Html.ValidationMessageFor(model => model.RequireConfirmedShippingAddress)
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.NopLabelFor(model => model.PaymentAction):
-            </td>
-            <td class="adminData">
-                @Html.DropDownListFor(model => model.PaymentAction, Model.PaymentActionOptions)
-                @Html.ValidationMessageFor(model => model.PaymentAction)
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.NopLabelFor(model => model.HandlingFee):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.HandlingFee)
-                @Html.ValidationMessageFor(model => model.HandlingFee)
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.NopLabelFor(model => model.HandlingFeeIsPercentage):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.HandlingFeeIsPercentage)
-                @Html.ValidationMessageFor(model => model.HandlingFeeIsPercentage)
-            </td>
-        </tr>
-        <tr>
-            <td class="adminTitle">
-                @Html.NopLabelFor(model => model.EnableDebugLogging):
-            </td>
-            <td class="adminData">
-                @Html.EditorFor(model => model.EnableDebugLogging)
-                @Html.ValidationMessageFor(model => model.EnableDebugLogging)
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2">
-                <input type="submit" name="save" class="k-button" value="@T("Admin.Common.Save")" />
-            </td>
-        </tr>
-    </table>
-    
+    <div class="panel-group">
+        <div class="panel panel-default">
+
+            <script type="text/javascript">
+                $(document).ready(function () {
+                    $("#@Html.FieldIdFor(model => model.DoNotHaveBusinessAccount)").change(changeBusinessAccount);
+                    changeBusinessAccount();
+                });
+
+                function changeBusinessAccount() {
+                    if ($('#@Html.FieldIdFor(model => model.DoNotHaveBusinessAccount)').is(':checked')) {
+                        $('#pnlEmailAddress').show();
+                        $('#pnlApiSignature').hide();
+                        $('#pnlUsername').hide();
+                        $('#pnlPassword').hide();
+                    } else {
+                        $('#pnlApiSignature').show();
+                        $('#pnlUsername').show();
+                        $('#pnlPassword').show();
+                        $('#pnlEmailAddress').hide();
+                    }
+                };
+            </script>
+
+            <div class="panel-body">
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.NopLabelFor(model => model.DoNotHaveBusinessAccount)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.DoNotHaveBusinessAccount)
+                        @Html.ValidationMessageFor(model => model.DoNotHaveBusinessAccount)
+                    </div>
+                </div>
+                <div class="form-group" id="pnlApiSignature">
+                    <div class="col-md-3">
+                        @Html.NopLabelFor(model => model.ApiSignature)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.ApiSignature)
+                        @Html.ValidationMessageFor(model => model.ApiSignature)
+                    </div>
+                </div>
+                <div class="form-group" id="pnlUsername">
+                    <div class="col-md-3">
+                        @Html.NopLabelFor(model => model.Username)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.Username)
+                        @Html.ValidationMessageFor(model => model.Username)
+                    </div>
+                </div>
+                <div class="form-group" id="pnlPassword">
+                    <div class="col-md-3">
+                        @Html.NopLabelFor(model => model.Password)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.Password)
+                        @Html.ValidationMessageFor(model => model.Password)
+                    </div>
+                </div>
+                <div class="form-group" id="pnlEmailAddress">
+                    <div class="col-md-3">
+                        @Html.NopLabelFor(model => model.EmailAddress)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.EmailAddress)
+                        @Html.ValidationMessageFor(model => model.EmailAddress)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.NopLabelFor(model => model.IsLive)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.IsLive)
+                        @Html.ValidationMessageFor(model => model.IsLive)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.NopLabelFor(model => model.LogoImageURL)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.LogoImageURL)
+                        @Html.ValidationMessageFor(model => model.LogoImageURL)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.NopLabelFor(model => model.CartBorderColor)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.CartBorderColor)
+                        @Html.ValidationMessageFor(model => model.CartBorderColor)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.NopLabelFor(model => model.LocaleCode)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopDropDownListFor(model => model.LocaleCode, Model.LocaleOptions)
+                        @Html.ValidationMessageFor(model => model.LocaleCode)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.NopLabelFor(model => model.RequireConfirmedShippingAddress)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.RequireConfirmedShippingAddress)
+                        @Html.ValidationMessageFor(model => model.RequireConfirmedShippingAddress)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.NopLabelFor(model => model.PaymentAction)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopDropDownListFor(model => model.PaymentAction, Model.PaymentActionOptions)
+                        @Html.ValidationMessageFor(model => model.PaymentAction)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.NopLabelFor(model => model.AdditionalFee)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.AdditionalFee)
+                        @Html.ValidationMessageFor(model => model.AdditionalFee)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.NopLabelFor(model => model.AdditionalFeePercentage)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.AdditionalFeePercentage)
+                        @Html.ValidationMessageFor(model => model.AdditionalFeePercentage)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.NopLabelFor(model => model.EnableDebugLogging)
+                    </div>
+                    <div class="col-md-9">
+                        @Html.NopEditorFor(model => model.EnableDebugLogging)
+                        @Html.ValidationMessageFor(model => model.EnableDebugLogging)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-9 col-md-offset-3">
+                        <input type="submit" name="save" class="btn btn-primary" value="@T("Admin.Common.Save")" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>   
 }
-<script type="text/javascript">
-    $(function () {
-        $('#DoNotHaveBusinessAccount').change(function () {
-            var checked = $('#DoNotHaveBusinessAccount').is(":checked");
-            if (checked) {
-                $('.do-not-have-business-account').show();
-                $('.have-business-account').hide();
-            } else {
-                $('.have-business-account').show();
-                $('.do-not-have-business-account').hide();
-            }
-        });
-        $('#DoNotHaveBusinessAccount').change();
-    })
-</script>

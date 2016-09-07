@@ -10,8 +10,10 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
     {
         [NopResourceDisplayName("Plugins.Payments.PayPalExpressCheckout.Fields.ApiSignature")]
         public string ApiSignature { get; set; }
+
         [NopResourceDisplayName("Plugins.Payments.PayPalExpressCheckout.Fields.Username")]
         public string Username { get; set; }
+
         [NopResourceDisplayName("Plugins.Payments.PayPalExpressCheckout.Fields.Password")]
         public string Password { get; set; }
 
@@ -39,11 +41,11 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
         [NopResourceDisplayName("Plugins.Payments.PayPalExpressCheckout.Fields.PaymentAction")]
         public PaymentActionCodeType PaymentAction { get; set; }
 
-        [NopResourceDisplayName("Plugins.Payments.PayPalExpressCheckout.Fields.HandlingFee")]
-        public decimal HandlingFee { get; set; }
+        [NopResourceDisplayName("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFee")]
+        public decimal AdditionalFee { get; set; }
 
-        [NopResourceDisplayName("Plugins.Payments.PayPalExpressCheckout.Fields.HandlingFeeIsPercentage")]
-        public bool HandlingFeeIsPercentage { get; set; }
+        [NopResourceDisplayName("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFeePercentage")]
+        public bool AdditionalFeePercentage { get; set; }
 
         [NopResourceDisplayName("Plugins.Payments.PayPalExpressCheckout.Fields.EnableDebugLogging")]
         public bool EnableDebugLogging { get; set; }

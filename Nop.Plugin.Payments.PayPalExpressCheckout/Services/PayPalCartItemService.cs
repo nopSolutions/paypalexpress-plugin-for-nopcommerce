@@ -35,10 +35,10 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         public decimal GetCartItemTotal(IList<ShoppingCartItem> cart)
         {
             decimal discountAmount;
-            Discount appliedDiscount;
+            List<Discount> appliedDiscounts;
             decimal subTotalWithoutDiscount;
             decimal subTotalWithDiscount;
-            _orderTotalCalculationService.GetShoppingCartSubTotal(cart, false, out discountAmount, out appliedDiscount,
+            _orderTotalCalculationService.GetShoppingCartSubTotal(cart, false, out discountAmount, out appliedDiscounts,
                                                                   out subTotalWithoutDiscount, out subTotalWithDiscount);
             return subTotalWithDiscount;
         }
@@ -80,21 +80,21 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             return paymentDetailsItemType;
         }
 
-        public decimal GetCartTotal(IList<ShoppingCartItem> cart, out decimal orderTotalDiscountAmount, out Discount appliedDiscount,
+        public decimal GetCartTotal(IList<ShoppingCartItem> cart, out decimal orderTotalDiscountAmount, out List<Discount> appliedDiscounts,
                                     out int redeemedRewardPoints, out decimal redeemedRewardPointsAmount, out List<AppliedGiftCard> appliedGiftCards)
         {
             _orderTotalCalculationService.GetShoppingCartTotal(cart, out orderTotalDiscountAmount,
-                                                               out appliedDiscount,
+                                                               out appliedDiscounts,
                                                                out appliedGiftCards, out redeemedRewardPoints,
                                                                out redeemedRewardPointsAmount);
 
             return GetCartTotal(cart) - (orderTotalDiscountAmount + appliedGiftCards.Sum(x => x.AmountCanBeUsed));
         }
 
-        public decimal GetCartItemTotal(IList<ShoppingCartItem> cart, out decimal subTotalDiscountAmount, out Discount subTotalAppliedDiscount, out decimal subTotalWithoutDiscount, out decimal subTotalWithDiscount)
+        public decimal GetCartItemTotal(IList<ShoppingCartItem> cart, out decimal subTotalDiscountAmount, out List<Discount> subTotalAppliedDiscounts, out decimal subTotalWithoutDiscount, out decimal subTotalWithDiscount)
         {
             _orderTotalCalculationService.GetShoppingCartSubTotal(cart, false, out subTotalDiscountAmount,
-                                                                  out subTotalAppliedDiscount,
+                                                                  out subTotalAppliedDiscounts,
                                                                   out subTotalWithoutDiscount, out subTotalWithDiscount);
             return subTotalWithDiscount;
         }

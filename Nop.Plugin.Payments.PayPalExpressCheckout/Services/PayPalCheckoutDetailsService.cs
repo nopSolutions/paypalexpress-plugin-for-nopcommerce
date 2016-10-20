@@ -47,7 +47,8 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             string billingEmail = checkoutDetails.PayerInfo.Payer;
             string billingAddress1 = checkoutDetails.PayerInfo.Address.Street1;
             string billingAddress2 = checkoutDetails.PayerInfo.Address.Street2;
-            string billingPhoneNumber = checkoutDetails.PayerInfo.ContactPhone;
+			string billingPhoneNumber = string.IsNullOrEmpty(checkoutDetails.PayerInfo.ContactPhone) ? checkoutDetails.ContactPhone : checkoutDetails.PayerInfo.ContactPhone;  //check if customer has entered the phone number, if not, get the contact phone number
+        			
             string billingCity = checkoutDetails.PayerInfo.Address.CityName;
             int? billingStateProvinceId = null;
             var billingStateProvince = _stateProvinceService.GetStateProvinceByAbbreviation(checkoutDetails.PayerInfo.Address.StateOrProvince);
@@ -107,7 +108,8 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 string shippingEmail = checkoutDetails.PayerInfo.Payer;
                 string shippingAddress1 = paymentDetails.ShipToAddress.Street1;
                 string shippingAddress2 = paymentDetails.ShipToAddress.Street2;
-                string shippingPhoneNumber = paymentDetails.ShipToAddress.Phone;
+                string shippingPhoneNumber = string.IsNullOrEmpty(paymentDetails.ShipToAddress.Phone) ? checkoutDetails.ContactPhone : paymentDetails.ShipToAddress.Phone; //check if customer has entered the shipping phone, if not, get the contact phone number
+
                 string shippingCity = paymentDetails.ShipToAddress.CityName;
                 int? shippingStateProvinceId = null;
                 var shippingStateProvince =

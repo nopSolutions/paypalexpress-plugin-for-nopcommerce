@@ -92,9 +92,10 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             {
                 OrderTotal = processPaymentRequest.OrderTotal.GetBasicAmountType(currencyCodeType),
                 Custom = processPaymentRequest.OrderGuid.ToString(),
-                ButtonSource = "nopCommerceCart",
+                ButtonSource = PayPalHelper.BnCode,
                 InvoiceID = processPaymentRequest.OrderGuid.ToString()
             };
+            
             // build the request
             return new DoExpressCheckoutPaymentReq
             {
@@ -107,6 +108,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                         PayerID = processPaymentRequest.CustomValues["PaypalPayerId"].ToString(),
                         PaymentAction = _payPalExpressCheckoutPaymentSettings.PaymentAction,
                         PaymentActionSpecified = true,
+                        ButtonSource = PayPalHelper.BnCode,
                         PaymentDetails = new[] { paymentDetails }
                     }
                 }

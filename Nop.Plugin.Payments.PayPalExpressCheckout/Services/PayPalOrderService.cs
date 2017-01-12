@@ -137,7 +137,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                         PaymentDetailsItem = items.ToArray(),
                         PaymentAction = _payPalExpressCheckoutPaymentSettings.PaymentAction,
                         PaymentActionSpecified = true,
-                        ButtonSource = "nopCommerce_Cart_EC"
+                        ButtonSource = PayPalHelper.BnCode
                     }
             };
         }

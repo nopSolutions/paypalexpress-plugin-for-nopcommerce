@@ -15,6 +15,17 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
 {
     public static class PayPalHelper
     {
+        #region Properties
+
+        /// <summary>
+        /// Get nopCommerce partner code
+        /// </summary>
+        public static string BnCode { get { return "nopCommerce_SP"; } }
+
+        #endregion
+
+        #region Methods
+
         public static T1 HandleResponse<T1, T2>(this T2 response, T1 result, Action<T1, T2> onSuccess, Action<T1, T2> onFailure, Guid orderGuid)
         where T2 : AbstractResponseType
         {
@@ -134,5 +145,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
                            Value = Math.Round(value, 2).ToString("N", new CultureInfo("en-us"))
                        };
         }
+
+        #endregion
     }
 }

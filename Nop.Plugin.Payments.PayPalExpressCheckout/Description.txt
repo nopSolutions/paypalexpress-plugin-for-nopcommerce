@@ -1,7 +1,7 @@
 ﻿Group: Payment methods
 FriendlyName: PayPal Express Checkout
 SystemName: Payments.PayPalExpressCheckout
-Version: 1.10
+Version: 1.11
 SupportedVersions: 3.80
 Author: nopCommerce team, Thought Consultancy - http://www.thought.co.uk
 DisplayOrder: 1

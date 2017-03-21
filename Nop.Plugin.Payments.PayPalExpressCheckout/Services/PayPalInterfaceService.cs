@@ -15,9 +15,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
         public PayPalAPIAAInterfaceClient GetAAService()
         {
-            //PayPal requires TLS 1.2 since January 2016
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-
             return
                 new PayPalAPIAAInterfaceClient(new BasicHttpsBinding(),
                                                new EndpointAddress(_payPalExpressCheckoutPaymentSettings.IsLive
@@ -27,9 +24,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
         public PayPalAPIInterfaceClient GetService()
         {
-            //PayPal requires TLS 1.2 since January 2016
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-
             return
                 new PayPalAPIInterfaceClient(new BasicHttpsBinding(),
                                                new EndpointAddress(_payPalExpressCheckoutPaymentSettings.IsLive

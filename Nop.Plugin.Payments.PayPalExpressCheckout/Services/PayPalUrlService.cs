@@ -6,31 +6,31 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
     public class PayPalUrlService : IPayPalUrlService
     {
         private readonly IStoreContext _storeContext;
+        private readonly IWebHelper _webHelper;
         private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
 
-        public PayPalUrlService(IStoreContext storeContext, PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings)
+        public PayPalUrlService(IStoreContext storeContext, 
+            IWebHelper webHelper,
+            PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings)
         {
             _storeContext = storeContext;
+            _webHelper = webHelper;
             _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
         }
 
         public string GetReturnURL()
         {
-            return
-                new Uri(new Uri(_storeContext.CurrentStore.Url), "Plugins/PaymentPayPalExpressCheckout/ReturnHandler")
-                    .ToString();
+            return string.Format("{0}Plugins/PaymentPayPalExpressCheckout/ReturnHandler", _webHelper.GetStoreLocation());
         }
 
         public string GetCancelURL()
         {
-            return new Uri(new Uri(_storeContext.CurrentStore.Url), "cart").ToString();
+            return string.Format("{0}cart", _webHelper.GetStoreLocation());
         }
 
         public string GetCallbackURL()
         {
-            return
-                new Uri(new Uri(_storeContext.CurrentStore.Url), "Plugins/PaymentPayPalExpressCheckout/CallbackHandler")
-                    .ToString();
+            throw new NotImplementedException();
         }
 
         public string GetCallbackTimeout()

@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
-using Nop.Core.Domain.Discounts;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Shipping;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Models;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Directory;
+using Nop.Services.Discounts;
 using Nop.Services.Orders;
 using Nop.Services.Shipping;
 using Nop.Services.Tax;
@@ -72,7 +72,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                                       };
 
                     //adjust rate
-                    List<Discount> appliedDiscounts = null;
+                    List<DiscountForCaching> appliedDiscounts = null;
                     var shippingTotal = _orderTotalCalculationService.AdjustShippingRate(
                         shippingOption.Rate, cart, out appliedDiscounts);
 
@@ -126,7 +126,8 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             {
                 //not found? let's load them using shipping service
                 shippingOptions = _shippingService
-                    .GetShippingOptions(cart, _workContext.CurrentCustomer.ShippingAddress, shippingRateComputationMethodSystemName)
+                    .GetShippingOptions(cart, _workContext.CurrentCustomer.ShippingAddress, 
+                    allowedShippingRateComputationMethodSystemName: shippingRateComputationMethodSystemName)
                     .ShippingOptions
                     .ToList();
             }

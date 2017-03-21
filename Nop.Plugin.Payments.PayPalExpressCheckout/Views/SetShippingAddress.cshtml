@@ -118,7 +118,7 @@
                     //Merge ModelState (required for validation)
                     dataDictAddress.ModelState.Merge(ViewData.ModelState);
                     dataDictAddress.TemplateInfo.HtmlFieldPrefix = "NewAddress";
-                            @Html.Partial("Nop.Plugin.Payments.PayPalExpressCheckout.Views.PaymentPayPalExpressCheckout._CreateOrUpdateAddress", Model.NewAddress, dataDictAddress)              
+                            @Html.Partial("Nop.Plugin.Payments.PayPalExpressCheckout.Views._CreateOrUpdateAddress", Model.NewAddress, dataDictAddress)              
                         }
                     </div>
                     <div class="buttons">

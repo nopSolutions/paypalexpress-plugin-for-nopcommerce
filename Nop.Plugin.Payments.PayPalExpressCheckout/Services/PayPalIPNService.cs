@@ -237,9 +237,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             string formContent = string.Format("{0}&cmd=_notify-validate", ipnData);
             req.ContentLength = formContent.Length;
 
-            //PayPal requires TLS 1.2 since January 2016
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-
             using (var sw = new StreamWriter(req.GetRequestStream(), Encoding.ASCII))
             {
                 sw.Write(formContent);

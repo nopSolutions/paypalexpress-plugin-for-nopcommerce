@@ -129,7 +129,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
                                 LocaleOptions = _payPalExpressCheckoutService.GetLocaleCodeOptions(_payPalExpressCheckoutPaymentSettings.LocaleCode),
                             };
 
-            return View("~/Plugins/Payments.PayPalExpressCheckout/Views/PaymentPayPalExpressCheckout/Configure.cshtml", model);
+            return View("~/Plugins/Payments.PayPalExpressCheckout/Views/Configure.cshtml", model);
         }
 
         [HttpPost]
@@ -171,7 +171,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             model.PaymentActionOptions = _payPalExpressCheckoutService.GetPaymentActionOptions(model.PaymentAction);
             model.LocaleOptions = _payPalExpressCheckoutService.GetLocaleCodeOptions(model.LocaleCode);
 
-            return View("~/Plugins/Payments.PayPalExpressCheckout/Views/PaymentPayPalExpressCheckout/Configure.cshtml", model);
+            return View("~/Plugins/Payments.PayPalExpressCheckout/Views/Configure.cshtml", model);
         }
 
         [NonAction]
@@ -202,7 +202,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
                 ButtonImageLocation = "https://www.paypalobjects.com/en_GB/i/btn/btn_xpressCheckout.gif",
             };
 
-            return View("~/Plugins/Payments.PayPalExpressCheckout/Views/PaymentPayPalExpressCheckout/PaymentInfo.cshtml", model);
+            return View("~/Plugins/Payments.PayPalExpressCheckout/Views/PaymentInfo.cshtml", model);
         }
 
         public RedirectResult SubmitButton()
@@ -229,7 +229,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
 
             var model = _payPalExpressCheckoutShippingMethodService.PrepareShippingMethodModel(cart);
 
-            return View("~/Plugins/Payments.PayPalExpressCheckout/Views/PaymentPayPalExpressCheckout/SetShippingMethod.cshtml", model);
+            return View("~/Plugins/Payments.PayPalExpressCheckout/Views/SetShippingMethod.cshtml", model);
         }
 
         [HttpPost, ActionName("SetShippingMethod")]
@@ -268,7 +268,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             //model
             var model = _payPalExpressCheckoutConfirmOrderService.PrepareConfirmOrderModel(cart);
 
-            return View("~/Plugins/Payments.PayPalExpressCheckout/Views/PaymentPayPalExpressCheckout/Confirm.cshtml", model);
+            return View("~/Plugins/Payments.PayPalExpressCheckout/Views/Confirm.cshtml", model);
         }
 
         [HttpPost, ActionName("Confirm")]
@@ -295,7 +295,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
                 return RedirectToRoute("CheckoutCompleted", new { orderId = checkoutPlaceOrderModel.CompletedId });
 
             //If we got this far, something failed, redisplay form
-            return View("~/Plugins/Payments.PayPalExpressCheckout/Views/PaymentPayPalExpressCheckout/Confirm.cshtml", checkoutPlaceOrderModel);
+            return View("~/Plugins/Payments.PayPalExpressCheckout/Views/Confirm.cshtml", checkoutPlaceOrderModel);
         }
 
         [ValidateInput(false)]

@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Nop.Core;
-using Nop.Core.Domain.Discounts;
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Helpers;
 using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
 using Nop.Services.Catalog;
+using Nop.Services.Discounts;
 using Nop.Services.Orders;
 using Nop.Services.Tax;
 
@@ -35,7 +35,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         public decimal GetCartItemTotal(IList<ShoppingCartItem> cart)
         {
             decimal discountAmount;
-            List<Discount> appliedDiscounts;
+            List<DiscountForCaching> appliedDiscounts;
             decimal subTotalWithoutDiscount;
             decimal subTotalWithDiscount;
             _orderTotalCalculationService.GetShoppingCartSubTotal(cart, false, out discountAmount, out appliedDiscounts,
@@ -80,7 +80,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             return paymentDetailsItemType;
         }
 
-        public decimal GetCartTotal(IList<ShoppingCartItem> cart, out decimal orderTotalDiscountAmount, out List<Discount> appliedDiscounts,
+        public decimal GetCartTotal(IList<ShoppingCartItem> cart, out decimal orderTotalDiscountAmount, out List<DiscountForCaching> appliedDiscounts,
                                     out int redeemedRewardPoints, out decimal redeemedRewardPointsAmount, out List<AppliedGiftCard> appliedGiftCards)
         {
             _orderTotalCalculationService.GetShoppingCartTotal(cart, out orderTotalDiscountAmount,
@@ -91,7 +91,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             return GetCartTotal(cart) - (orderTotalDiscountAmount + appliedGiftCards.Sum(x => x.AmountCanBeUsed));
         }
 
-        public decimal GetCartItemTotal(IList<ShoppingCartItem> cart, out decimal subTotalDiscountAmount, out List<Discount> subTotalAppliedDiscounts, out decimal subTotalWithoutDiscount, out decimal subTotalWithDiscount)
+        public decimal GetCartItemTotal(IList<ShoppingCartItem> cart, out decimal subTotalDiscountAmount, out List<DiscountForCaching> subTotalAppliedDiscounts, out decimal subTotalWithoutDiscount, out decimal subTotalWithDiscount)
         {
             _orderTotalCalculationService.GetShoppingCartSubTotal(cart, false, out subTotalDiscountAmount,
                                                                   out subTotalAppliedDiscounts,

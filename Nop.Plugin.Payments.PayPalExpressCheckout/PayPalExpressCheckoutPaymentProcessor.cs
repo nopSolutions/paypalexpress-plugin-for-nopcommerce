@@ -22,6 +22,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
         #region Fields
 
         private readonly HttpSessionStateBase _session;
+        private readonly ILocalizationService _localizationService;
         private readonly IOrderTotalCalculationService _orderTotalCalculationService;
         private readonly IPayPalInterfaceService _payPalInterfaceService;
         private readonly IPayPalRequestService _payPalRequestService;
@@ -34,6 +35,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
         #region Ctor
 
         public PayPalExpressCheckoutPaymentProcessor(HttpSessionStateBase session,
+            ILocalizationService localizationService,
             IOrderTotalCalculationService orderTotalCalculationService,
             IPayPalInterfaceService payPalInterfaceService,
             IPayPalRequestService payPalRequestService,
@@ -42,6 +44,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
             PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings)
         {
             _session = session;
+            _localizationService = localizationService;
             _orderTotalCalculationService = orderTotalCalculationService;
             _payPalInterfaceService = payPalInterfaceService;
             _payPalRequestService = payPalRequestService;
@@ -334,6 +337,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.RequireConfirmedShippingAddress.Hint", "Indicates whether or not you require the buyer’s shipping address on file with PayPal be a confirmed address.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Username", "Username");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Username.Hint", "The API Username specified in your PayPal account (this is not your PayPal account email)");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.PaymentMethodDescription", "Pay by PayPal");
 
             base.Install();
         }
@@ -375,6 +379,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
             this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.RequireConfirmedShippingAddress.Hint");
             this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Username");
             this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Username.Hint");
+            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.PaymentMethodDescription");
 
             base.Uninstall();
         }
@@ -437,6 +442,16 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
         public bool SkipPaymentInfo
         {
             get { return false; }
+        }
+
+        /// <summary>
+        /// Gets a payment method description that will be displayed on checkout pages in the public store
+        /// </summary>
+        public string PaymentMethodDescription
+        {
+            //return description of this payment method to be display on "payment method" checkout step. good practice is to make it localizable
+            //for example, for a redirection payment method, description may be like this: "You will be redirected to PayPal site to complete the payment"
+            get { return _localizationService.GetResource("Plugins.Payments.PayPalExpressCheckout.PaymentMethodDescription"); }
         }
 
         #endregion

@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using Nop.Core;
-using Nop.Core.Domain.Discounts;
-using Nop.Core.Domain.Orders;
-using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
+﻿using System.Collections.Generic;
 using System.Linq;
+using Nop.Core;
 using Nop.Core.Domain.Customers;
+using Nop.Core.Domain.Orders;
+using Nop.Plugin.Payments.PayPalExpressCheckout.Helpers;
+using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
+using Nop.Services.Common;
+using Nop.Services.Discounts;
 using Nop.Services.Orders;
 using Nop.Services.Shipping;
-using Nop.Plugin.Payments.PayPalExpressCheckout.Helpers;
-using Nop.Services.Common;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
@@ -48,7 +47,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             var currencyCode = _payPalCurrencyCodeParser.GetCurrencyCodeType(_workContext.WorkingCurrency);
 
             decimal orderTotalDiscountAmount;
-            List<Discount> appliedDiscounts;
+            List<DiscountForCaching> appliedDiscounts;
             int redeemedRewardPoints;
             decimal redeemedRewardPointsAmount;
             List<AppliedGiftCard> appliedGiftCards;
@@ -60,7 +59,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
             decimal subTotalWithDiscount;
             decimal subTotalWithoutDiscount;
-            List<Discount> subTotalAppliedDiscounts;
+            List<DiscountForCaching> subTotalAppliedDiscounts;
             decimal subTotalDiscountAmount;
             var itemTotalWithDiscount = _payPalCartItemService.GetCartItemTotal(cart,
                 out subTotalDiscountAmount,

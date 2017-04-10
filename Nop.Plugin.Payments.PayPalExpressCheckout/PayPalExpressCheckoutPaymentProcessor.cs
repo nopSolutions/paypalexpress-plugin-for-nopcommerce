@@ -337,6 +337,8 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.RequireConfirmedShippingAddress.Hint", "Indicates whether or not you require the buyer’s shipping address on file with PayPal be a confirmed address.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Username", "Username");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Username.Hint", "The API Username specified in your PayPal account (this is not your PayPal account email)");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.ButtonImageLocation", "PayPal button image");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.ButtonImageLocation.Hint", "PayPal button image URL, e.g. https://www.paypalobjects.com/en_GB/i/btn/btn_xpressCheckout.gif");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.PaymentMethodDescription", "Pay by PayPal");
 
             base.Install();
@@ -379,6 +381,8 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
             this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.RequireConfirmedShippingAddress.Hint");
             this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Username");
             this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Username.Hint");
+            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.ButtonImageLocation");
+            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.ButtonImageLocation.Hint");
             this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.PaymentMethodDescription");
 
             base.Uninstall();

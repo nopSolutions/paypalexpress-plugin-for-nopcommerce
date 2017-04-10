@@ -127,6 +127,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
                                 RequireConfirmedShippingAddress = _payPalExpressCheckoutPaymentSettings.RequireConfirmedShippingAddress,
                                 PaymentActionOptions = _payPalExpressCheckoutService.GetPaymentActionOptions(_payPalExpressCheckoutPaymentSettings.PaymentAction),
                                 LocaleOptions = _payPalExpressCheckoutService.GetLocaleCodeOptions(_payPalExpressCheckoutPaymentSettings.LocaleCode),
+                                ButtonImageLocation = _payPalExpressCheckoutPaymentSettings.ButtonImageLocation
                             };
 
             return View("~/Plugins/Payments.PayPalExpressCheckout/Views/Configure.cshtml", model);
@@ -158,6 +159,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
                 _payPalExpressCheckoutPaymentSettings.PaymentAction = model.PaymentAction;
                 _payPalExpressCheckoutPaymentSettings.RequireConfirmedShippingAddress =
                     model.RequireConfirmedShippingAddress;
+                _payPalExpressCheckoutPaymentSettings.ButtonImageLocation = model.ButtonImageLocation;
 
                 _settingService.SaveSetting(_payPalExpressCheckoutPaymentSettings);
             }
@@ -199,8 +201,13 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
 
             var model = new PaymentInfoModel()
             {
-                ButtonImageLocation = "https://www.paypalobjects.com/en_GB/i/btn/btn_xpressCheckout.gif",
+                ButtonImageLocation = _payPalExpressCheckoutPaymentSettings.ButtonImageLocation
             };
+
+            if (string.IsNullOrWhiteSpace(model.ButtonImageLocation))
+            {
+                model.ButtonImageLocation = "https://www.paypalobjects.com/en_GB/i/btn/btn_xpressCheckout.gif";
+            }
 
             return View("~/Plugins/Payments.PayPalExpressCheckout/Views/PaymentInfo.cshtml", model);
         }

@@ -74,5 +74,11 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
         /// Gets or sets a value indicating whether to enable debug logging
         /// </summary>
         public bool EnableDebugLogging { get; set; }
+
+        /// <summary>
+        /// Gets or sets PayPal button image.
+        /// Default: https://www.paypalobjects.com/en_GB/i/btn/btn_xpressCheckout.gif
+        /// </summary>
+        public string ButtonImageLocation { get; set; }
     }
 }

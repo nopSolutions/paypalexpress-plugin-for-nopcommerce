@@ -50,6 +50,9 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
         [NopResourceDisplayName("Plugins.Payments.PayPalExpressCheckout.Fields.EnableDebugLogging")]
         public bool EnableDebugLogging { get; set; }
 
+        [NopResourceDisplayName("Plugins.Payments.PayPalExpressCheckout.Fields.ButtonImageLocation")]
+        public string ButtonImageLocation { get; set; }
+
         public IEnumerable<SelectListItem> PaymentActionOptions { get; set; }
 
         public IEnumerable<SelectListItem> LocaleOptions { get; set; }

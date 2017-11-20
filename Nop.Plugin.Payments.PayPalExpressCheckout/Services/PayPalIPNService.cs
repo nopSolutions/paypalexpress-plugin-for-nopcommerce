@@ -4,7 +4,6 @@ using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Text;
-using System.Web;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
@@ -30,66 +29,51 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
         public void HandleIPN(string ipnData)
         {
-            Dictionary<string, string> values;
-            if (VerifyIPN(ipnData, out values))
+            if (VerifyIPN(ipnData, out Dictionary<string, string> values))
             {
-                #region values
-                decimal total = decimal.Zero;
+                
+                var total = decimal.Zero;
                 try
                 {
                     total = decimal.Parse(values["mc_gross"], new CultureInfo("en-US"));
                 }
                 catch { }
 
-                string payer_status = string.Empty;
-                values.TryGetValue("payer_status", out payer_status);
-                string payment_status = string.Empty;
-                values.TryGetValue("payment_status", out payment_status);
-                string pending_reason = string.Empty;
-                values.TryGetValue("pending_reason", out pending_reason);
-                string mc_currency = string.Empty;
-                values.TryGetValue("mc_currency", out mc_currency);
-                string txn_id = string.Empty;
-                values.TryGetValue("txn_id", out txn_id);
-                string txn_type = string.Empty;
-                values.TryGetValue("txn_type", out txn_type);
-                string rp_invoice_id = string.Empty;
-                values.TryGetValue("rp_invoice_id", out rp_invoice_id);
-                string payment_type = string.Empty;
-                values.TryGetValue("payment_type", out payment_type);
-                string payer_id = string.Empty;
-                values.TryGetValue("payer_id", out payer_id);
-                string receiver_id = string.Empty;
-                values.TryGetValue("receiver_id", out receiver_id);
-                string invoice = string.Empty;
-                values.TryGetValue("invoice", out invoice);
-                string payment_fee = string.Empty;
-                values.TryGetValue("payment_fee", out payment_fee);
+                values.TryGetValue("payer_status", out string _);
+                values.TryGetValue("payment_status", out string paymentStatus);
+                values.TryGetValue("pending_reason", out string pendingReason);
+                values.TryGetValue("mc_currency", out string _);
+                values.TryGetValue("txn_id", out string _);
+                values.TryGetValue("txn_type", out string txnType);
+                values.TryGetValue("rp_invoice_id", out string rpInvoiceID);
+                values.TryGetValue("payment_type", out string _);
+                values.TryGetValue("payer_id", out string _);
+                values.TryGetValue("receiver_id", out string _);
+                values.TryGetValue("invoice", out string _);
+                values.TryGetValue("payment_fee", out string _);
 
-                #endregion
 
                 var sb = new StringBuilder();
                 sb.AppendLine("Paypal IPN:");
-                foreach (KeyValuePair<string, string> kvp in values)
+                foreach (var kvp in values)
                 {
                     sb.AppendLine(kvp.Key + ": " + kvp.Value);
                 }
 
-                var newPaymentStatus = GetPaymentStatus(payment_status, pending_reason);
+                var newPaymentStatus = GetPaymentStatus(paymentStatus, pendingReason);
                 sb.AppendLine("New payment status: " + newPaymentStatus);
 
-                switch (txn_type)
+                switch (txnType)
                 {
                     case "recurring_payment_profile_created":
                         //do nothing here
                         break;
                     case "recurring_payment":
-                        #region Recurring payment
                         {
-                            Guid orderNumberGuid = Guid.Empty;
+                            var orderNumberGuid = Guid.Empty;
                             try
                             {
-                                orderNumberGuid = new Guid(rp_invoice_id);
+                                orderNumberGuid = new Guid(rpInvoiceID);
                             }
                             catch
                             {
@@ -111,11 +95,11 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                                                 {
                                                     //first payment
                                                     var rph = new RecurringPaymentHistory()
-                                                                  {
-                                                                      RecurringPaymentId = rp.Id,
-                                                                      OrderId = initialOrder.Id,
-                                                                      CreatedOnUtc = DateTime.UtcNow
-                                                                  };
+                                                    {
+                                                        RecurringPaymentId = rp.Id,
+                                                        OrderId = initialOrder.Id,
+                                                        CreatedOnUtc = DateTime.UtcNow
+                                                    };
                                                     rp.RecurringPaymentHistory.Add(rph);
                                                     _orderService.UpdateRecurringPayment(rp);
                                                 }
@@ -137,14 +121,11 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                                 _logger.Error("PayPal IPN. Order is not found", new NopException(sb.ToString()));
                             }
                         }
-                        #endregion
                         break;
                     default:
-                        #region Standard payment
                         {
-                            string orderNumber = string.Empty;
-                            values.TryGetValue("custom", out orderNumber);
-                            Guid orderNumberGuid = Guid.Empty;
+                            values.TryGetValue("custom", out string orderNumber);
+                            var orderNumberGuid = Guid.Empty;
                             try
                             {
                                 orderNumberGuid = new Guid(orderNumber);
@@ -158,12 +139,12 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                             {
 
                                 //order note
-                                order.OrderNotes.Add(new OrderNote()
-                                                         {
-                                                             Note = sb.ToString(),
-                                                             DisplayToCustomer = false,
-                                                             CreatedOnUtc = DateTime.UtcNow
-                                                         });
+                                order.OrderNotes.Add(new OrderNote
+                                {
+                                    Note = sb.ToString(),
+                                    DisplayToCustomer = false,
+                                    CreatedOnUtc = DateTime.UtcNow
+                                });
                                 _orderService.UpdateOrder(order);
 
                                 switch (newPaymentStatus)
@@ -213,7 +194,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                                 _logger.Error("PayPal IPN. Order is not found", new NopException(sb.ToString()));
                             }
                         }
-                        #endregion
                         break;
                 }
             }
@@ -225,7 +205,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         /// <summary>
         /// Verifies IPN
         /// </summary>
-        /// <param name="formString">Form string</param>
+        /// <param name="ipnData">IPN data</param>
         /// <param name="values">Values</param>
         /// <returns>Result</returns>
         public bool VerifyIPN(string ipnData, out Dictionary<string, string> values)
@@ -234,7 +214,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             req.Method = "POST";
             req.ContentType = "application/x-www-form-urlencoded";
 
-            string formContent = string.Format("{0}&cmd=_notify-validate", ipnData);
+            var formContent = $"{ipnData}&cmd=_notify-validate";
             req.ContentLength = formContent.Length;
 
             using (var sw = new StreamWriter(req.GetRequestStream(), Encoding.ASCII))
@@ -242,18 +222,18 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 sw.Write(formContent);
             }
 
-            string response = null;
+            string response;
             using (var sr = new StreamReader(req.GetResponse().GetResponseStream()))
             {
-                response = HttpUtility.UrlDecode(sr.ReadToEnd());
+                response = WebUtility.UrlDecode(sr.ReadToEnd());
             }
-            bool success = response.Trim().Equals("VERIFIED", StringComparison.OrdinalIgnoreCase);
+            var success = response.Trim().Equals("VERIFIED", StringComparison.OrdinalIgnoreCase);
 
             values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (string l in ipnData.Split('&'))
+            foreach (var l in ipnData.Split('&'))
             {
-                string line = l.Trim();
-                int equalPox = line.IndexOf('=');
+                var line = l.Trim();
+                var equalPox = line.IndexOf('=');
                 if (equalPox >= 0)
                     values.Add(line.Substring(0, equalPox), line.Substring(equalPox + 1));
             }

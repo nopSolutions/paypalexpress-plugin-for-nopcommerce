@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Directory;
 using Nop.Services.Directory;
@@ -29,10 +29,10 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
                                         Func<IList<Country>> loadCountries = null)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (addressSettings == null)
-                throw new ArgumentNullException("addressSettings");
+                throw new ArgumentNullException(nameof(addressSettings));
 
             if (!excludeProperties && address != null)
             {
@@ -42,13 +42,9 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
                 model.Email = address.Email;
                 model.Company = address.Company;
                 model.CountryId = address.CountryId;
-                model.CountryName = address.Country != null 
-                                        ? address.Country.GetLocalized(x => x.Name) 
-                                        : null;
+                model.CountryName = address.Country?.GetLocalized(x => x.Name);
                 model.StateProvinceId = address.StateProvinceId;
-                model.StateProvinceName = address.StateProvince != null 
-                                              ? address.StateProvince.GetLocalized(x => x.Name)
-                                              : null;
+                model.StateProvinceName = address.StateProvince?.GetLocalized(x => x.Name);
                 model.City = address.City;
                 model.Address1 = address.Address1;
                 model.Address2 = address.Address2;
@@ -61,33 +57,33 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
             if (addressSettings.CountryEnabled && loadCountries != null)
             {
                 if (localizationService == null)
-                    throw new ArgumentNullException("localizationService");
+                    throw new ArgumentNullException(nameof(localizationService));
 
-                model.AvailableCountries.Add(new SelectListItem() { Text = localizationService.GetResource("Address.SelectCountry"), Value = "0" });
+                model.AvailableCountries.Add(new SelectListItem { Text = localizationService.GetResource("Address.SelectCountry"), Value = "0" });
                 foreach (var c in loadCountries())
                 {
-                    model.AvailableCountries.Add(new SelectListItem()
-                                                     {
-                                                         Text = c.GetLocalized(x => x.Name),
-                                                         Value = c.Id.ToString(),
-                                                         Selected = c.Id == model.CountryId
-                                                     });
+                    model.AvailableCountries.Add(new SelectListItem
+                    {
+                        Text = c.GetLocalized(x => x.Name),
+                        Value = c.Id.ToString(),
+                        Selected = c.Id == model.CountryId
+                    });
                 }
 
                 if (addressSettings.StateProvinceEnabled)
                 {
                     //states
                     if (stateProvinceService == null)
-                        throw new ArgumentNullException("stateProvinceService");
+                        throw new ArgumentNullException(nameof(stateProvinceService));
 
                     var states = stateProvinceService
-                        .GetStateProvincesByCountryId(model.CountryId.HasValue ? model.CountryId.Value : 0)
+                        .GetStateProvincesByCountryId(model.CountryId ?? 0)
                         .ToList();
                     if (states.Count > 0)
                     {
                         foreach (var s in states)
                         {
-                            model.AvailableStates.Add(new SelectListItem()
+                            model.AvailableStates.Add(new SelectListItem
                                                           {
                                                               Text = s.GetLocalized(x => x.Name),
                                                               Value = s.Id.ToString(), 
@@ -97,7 +93,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
                     }
                     else
                     {
-                        model.AvailableStates.Add(new SelectListItem()
+                        model.AvailableStates.Add(new SelectListItem
                                                       {
                                                           Text = localizationService.GetResource("Address.OtherNonUS"),
                                                           Value = "0"

@@ -1,24 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Models;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Services;
 using Nop.Services.Configuration;
 using Nop.Services.Orders;
-using Nop.Services.Payments;
+using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
+using Nop.Web.Framework.Mvc.Filters;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
 {
     public class PaymentPayPalExpressCheckoutController : BasePaymentController
     {
         #region Fields
-
-        private readonly IOrderProcessingService _orderProcessingService;        
+  
         private readonly IPayPalExpressCheckoutConfirmOrderService _payPalExpressCheckoutConfirmOrderService;
         private readonly IPayPalExpressCheckoutPlaceOrderService _payPalExpressCheckoutPlaceOrderService;
         private readonly IPayPalExpressCheckoutService _payPalExpressCheckoutService;
@@ -32,8 +33,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
 
         #region Ctor
 
-        public PaymentPayPalExpressCheckoutController(IOrderProcessingService orderProcessingService,
-            IPayPalExpressCheckoutConfirmOrderService payPalExpressCheckoutConfirmOrderService,
+        public PaymentPayPalExpressCheckoutController(IPayPalExpressCheckoutConfirmOrderService payPalExpressCheckoutConfirmOrderService,
             IPayPalExpressCheckoutPlaceOrderService payPalExpressCheckoutPlaceOrderService,
             IPayPalExpressCheckoutService payPalExpressCheckoutService,
             IPayPalExpressCheckoutShippingMethodService payPalExpressCheckoutShippingMethodService,
@@ -42,7 +42,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             ISettingService settingService,
             PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings)
         {
-            _orderProcessingService = orderProcessingService;
             _payPalExpressCheckoutConfirmOrderService = payPalExpressCheckoutConfirmOrderService;
             _payPalExpressCheckoutPlaceOrderService = payPalExpressCheckoutPlaceOrderService;
             _payPalExpressCheckoutService = payPalExpressCheckoutService;
@@ -105,9 +104,9 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
 
         #region Methods
 
-        [AdminAuthorize]
-        [ChildActionOnly]
-        public ActionResult Configure()
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        public IActionResult Configure()
         {
             var model = new ConfigurationModel
                             {
@@ -133,15 +132,14 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
         }
 
         [HttpPost]
-        [AdminAuthorize]
-        [ChildActionOnly]
-        public ActionResult Configure(ConfigurationModel model)
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        public IActionResult Configure(ConfigurationModel model)
         {
             if (!ModelState.IsValid)
                 return Configure();
 
-            var validationErrors = new List<string>();
-            if (IsLogoImageValid(model.LogoImageURL, out validationErrors))
+            if (IsLogoImageValid(model.LogoImageURL, out List<string> validationErrors))
             {
                 _payPalExpressCheckoutPaymentSettings.ApiSignature = model.ApiSignature;
                 _payPalExpressCheckoutPaymentSettings.LogoImageURL = model.LogoImageURL;
@@ -173,38 +171,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
 
             return View("~/Plugins/Payments.PayPalExpressCheckout/Views/Configure.cshtml", model);
         }
-
-        [NonAction]
-        public override IList<string> ValidatePaymentForm(FormCollection form)
-        {
-            return new List<string>();
-        }
-
-        [NonAction]
-        public override ProcessPaymentRequest GetPaymentInfo(FormCollection form)
-        {
-            return new ProcessPaymentRequest();
-        }
-
-        [ChildActionOnly]
-        public ActionResult PaymentInfo()
-        {
-            var cart = _payPalExpressCheckoutService.GetCart();
-            if (cart.Count == 0)
-                return Content("");
-
-            bool minOrderSubtotalAmountOk = _orderProcessingService.ValidateMinOrderSubtotalAmount(cart);
-            if (!minOrderSubtotalAmountOk)
-                return Content("");
-
-            var model = new PaymentInfoModel()
-            {
-                ButtonImageLocation = "https://www.paypalobjects.com/en_GB/i/btn/btn_xpressCheckout.gif",
-            };
-
-            return View("~/Plugins/Payments.PayPalExpressCheckout/Views/PaymentInfo.cshtml", model);
-        }
-
+       
         public RedirectResult SubmitButton()
         {
             var cart = _payPalExpressCheckoutService.GetCart();
@@ -212,12 +179,14 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             return Redirect(_payPalRedirectionService.ProcessSubmitButton(cart, TempData));
         }
 
-        public ActionResult Return(string token)
+        public IActionResult Return(string token)
         {
             var success = _payPalRedirectionService.ProcessReturn(token);
-            return success
-                       ? RedirectToAction("SetShippingMethod")
-                       : RedirectToRoute("ShoppingCart");
+
+            if (!success)
+                return RedirectToRoute("ShoppingCart");
+
+            return RedirectToAction("SetShippingMethod");
         }
 
         public ActionResult SetShippingMethod()
@@ -233,7 +202,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
         }
 
         [HttpPost, ActionName("SetShippingMethod")]
-        [ValidateInput(false)]
         public ActionResult SetShippingMethod(string shippingoption)
         {
             //validation
@@ -242,7 +210,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
                 return RedirectToRoute("ShoppingCart");
 
             if (!_payPalExpressCheckoutService.IsAllowedToCheckout())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             if (!cart.RequiresShipping())
             {
@@ -263,7 +231,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
                 return RedirectToRoute("ShoppingCart");
 
             if (!_payPalExpressCheckoutService.IsAllowedToCheckout())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             //model
             var model = _payPalExpressCheckoutConfirmOrderService.PrepareConfirmOrderModel(cart);
@@ -272,7 +240,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
         }
 
         [HttpPost, ActionName("Confirm")]
-        [ValidateInput(false)]
         public ActionResult ConfirmOrder()
         {
             //validation
@@ -281,7 +248,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
                 return RedirectToRoute("ShoppingCart");
 
             if (!_payPalExpressCheckoutService.IsAllowedToCheckout())
-                return new HttpUnauthorizedResult();
+                return new UnauthorizedResult();
 
             //model
             var checkoutPlaceOrderModel = _payPalExpressCheckoutPlaceOrderService.PlaceOrder();
@@ -298,13 +265,15 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             return View("~/Plugins/Payments.PayPalExpressCheckout/Views/Confirm.cshtml", checkoutPlaceOrderModel);
         }
 
-        [ValidateInput(false)]
         public ActionResult IPNHandler()
         {
-            byte[] param = Request.BinaryRead(Request.ContentLength);
-            string ipnData = Encoding.ASCII.GetString(param);
+            using (var ms = new MemoryStream())
+            {
+                Request.Body.CopyTo(ms);
+                var ipnData = Encoding.ASCII.GetString(ms.ToArray());
 
-            _payPalIPNService.HandleIPN(ipnData);
+                _payPalIPNService.HandleIPN(ipnData);
+            }
 
             //nothing should be rendered to visitor
             return Content("");

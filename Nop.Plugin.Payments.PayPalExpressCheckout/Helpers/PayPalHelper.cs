@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using System.Web.Script.Serialization;
+using Newtonsoft.Json;
 using Nop.Core.Domain.Logging;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Infrastructure;
@@ -63,8 +63,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
             {
                 var chunk = chunks[index];
                 var message = new string(chunk.ToArray());
-                var intro = string.Format("{0} returned - Part {1} of {2}", response.GetType().Name, index + 1,
-                                          chunks.Count);
+                var intro = $"{response.GetType().Name} returned - Part {index + 1} of {chunks.Count}";
 
                 if (order != null)
                 {
@@ -86,8 +85,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
             {
                 var chunk = chunks[index];
                 var message = new string(chunk.ToArray());
-                var intro = string.Format("{0} returned - Part {1} of {2}", response.GetType().Name, index + 1,
-                                          chunks.Count);
+                var intro = $"{response.GetType().Name} returned - Part {index + 1} of {chunks.Count}";
 
                 if (EngineContext.Current.Resolve<PayPalExpressCheckoutPaymentSettings>().EnableDebugLogging)
                 {
@@ -100,8 +98,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
 
         private static List<IEnumerable<char>> GetMessage<T>(T response) where T : AbstractResponseType
         {
-            var javaScriptSerializer = new JavaScriptSerializer();
-            var fullMessage = javaScriptSerializer.Serialize(response);
+            var fullMessage = JsonConvert.SerializeObject(response);
             var chunks = fullMessage.Chunk(3500).ToList();
             return chunks;
         }
@@ -140,10 +137,10 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
         public static BasicAmountType GetBasicAmountType(this decimal value, CurrencyCodeType currency)
         {
             return new BasicAmountType
-                       {
-                           currencyID = currency,
-                           Value = Math.Round(value, 2).ToString("N", new CultureInfo("en-us"))
-                       };
+            {
+                currencyID = currency,
+                Value = Math.Round(value, 2).ToString("N", new CultureInfo("en-us"))
+            };
         }
 
         #endregion

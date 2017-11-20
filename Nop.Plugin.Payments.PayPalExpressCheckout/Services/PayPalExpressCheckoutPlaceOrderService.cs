@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Web;
+using Microsoft.AspNetCore.Http;
 using Nop.Core;
-using Nop.Core.Domain.Orders;
+using Nop.Core.Http.Extensions;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Helpers;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Models;
 using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
@@ -15,7 +14,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
     public class PayPalExpressCheckoutPlaceOrderService : IPayPalExpressCheckoutPlaceOrderService
     {
-        private readonly HttpSessionStateBase _session;
+        private readonly ISession _session;
         private readonly IPayPalExpressCheckoutService _payPalExpressCheckoutService;
         private readonly IWorkContext _workContext;
         private readonly ILocalizationService _localizationService;
@@ -25,17 +24,17 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         private readonly IWebHelper _webHelper;
         private readonly ILogger _logger;
 
-        public PayPalExpressCheckoutPlaceOrderService(HttpSessionStateBase session,
-                                                      IPayPalExpressCheckoutService payPalExpressCheckoutService,
-                                                      IWorkContext workContext,
-                                                      ILocalizationService localizationService,
-                                                      IStoreContext storeContext,
-                                                      IOrderProcessingService orderProcessingService,
-                                                      IPaymentService paymentService,
-                                                      IWebHelper webHelper,
-                                                      ILogger logger)
+        public PayPalExpressCheckoutPlaceOrderService(IHttpContextAccessor httpContextAccessor,
+            IPayPalExpressCheckoutService payPalExpressCheckoutService,
+            IWorkContext workContext,
+            ILocalizationService localizationService,
+            IStoreContext storeContext,
+            IOrderProcessingService orderProcessingService,
+            IPaymentService paymentService,
+            IWebHelper webHelper,
+            ILogger logger)
         {
-            _session = session;
+            _session = httpContextAccessor.HttpContext.Session;
             _payPalExpressCheckoutService = payPalExpressCheckoutService;
             _workContext = workContext;
             _localizationService = localizationService;
@@ -51,7 +50,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             var model = new CheckoutPlaceOrderModel();
             try
             {
-                var processPaymentRequest = _session["OrderPaymentInfo"] as ProcessPaymentRequest;
+                var processPaymentRequest = _session.Get<ProcessPaymentRequest>("OrderPaymentInfo");
                 if (processPaymentRequest == null)
                 {
                     model.RedirectToCart = true;
@@ -70,16 +69,13 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
                 if (placeOrderResult.Success)
                 {
-                    var doExpressCheckoutPaymentResponseType = _session["express-checkout-response-type"] as DoExpressCheckoutPaymentResponseType;
-                    if (doExpressCheckoutPaymentResponseType != null)
-                    {
-                        doExpressCheckoutPaymentResponseType.LogOrderNotes(placeOrderResult.PlacedOrder.OrderGuid);
-                    }
-                    _session["OrderPaymentInfo"] = null;
+                    var doExpressCheckoutPaymentResponseType = _session.Get<DoExpressCheckoutPaymentResponseType>("express-checkout-response-type");
+                    doExpressCheckoutPaymentResponseType?.LogOrderNotes(placeOrderResult.PlacedOrder.OrderGuid);
+                    _session.Set("OrderPaymentInfo", null);
                     var postProcessPaymentRequest = new PostProcessPaymentRequest
-                                                        {
-                                                            Order = placeOrderResult.PlacedOrder
-                                                        };
+                    {
+                        Order = placeOrderResult.PlacedOrder
+                    };
                     _paymentService.PostProcessPayment(postProcessPaymentRequest);
 
                     if (_webHelper.IsRequestBeingRedirected || _webHelper.IsPostBeingDone)
@@ -88,17 +84,11 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                         model.IsRedirected = true;
                         return model;
                     }
-                    else
-                    {
-                        model.CompletedId = placeOrderResult.PlacedOrder.Id;
-                        return model;
-                    }
+                    model.CompletedId = placeOrderResult.PlacedOrder.Id;
+                    return model;
                 }
-                else
-                {
-                    foreach (var error in placeOrderResult.Errors)
-                        model.Warnings.Add(error);
-                }
+                foreach (var error in placeOrderResult.Errors)
+                    model.Warnings.Add(error);
             }
             catch (Exception exc)
             {

@@ -1,61 +1,47 @@
-﻿using System.Web.Mvc;
-using System.Web.Routing;
-using Nop.Web.Framework.Mvc.Routes;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
+using Nop.Web.Framework.Mvc.Routing;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout
 {
     public class RouteProvider : IRouteProvider
     {
-        public void RegisterRoutes(RouteCollection routes)
+        public void RegisterRoutes(IRouteBuilder routeBuilder)
         {
             //Submit PayPal Express Checkout button
-            routes.MapRoute("Plugin.Payments.PayPalExpressCheckout.SubmitButton",
+            routeBuilder.MapRoute("Plugin.Payments.PayPalExpressCheckout.SubmitButton",
                  "Plugins/PaymentPayPalExpressCheckout/SubmitButton",
-                 new { controller = "PaymentPayPalExpressCheckout", action = "SubmitButton" },
-                 new[] { "Nop.Plugin.Payments.PayPalExpressCheckout.Controllers" }
-                 );
+                 new { controller = "PaymentPayPalExpressCheckout", action = "SubmitButton" });
 
             // return handler
-            routes.MapRoute("Plugin.Payments.PayPalExpressCheckout.ReturnHandler",
+            routeBuilder.MapRoute("Plugin.Payments.PayPalExpressCheckout.ReturnHandler",
                  "Plugins/PaymentPayPalExpressCheckout/ReturnHandler",
-                 new { controller = "PaymentPayPalExpressCheckout", action = "Return" },
-                 new[] { "Nop.Plugin.Payments.PayPalExpressCheckout.Controllers" }
-                 );
+                 new { controller = "PaymentPayPalExpressCheckout", action = "Return" });
 
             // set existing address
-            routes.MapRoute("Plugin.Payments.PayPalExpressCheckout.SetExistingAddress",
+            routeBuilder.MapRoute("Plugin.Payments.PayPalExpressCheckout.SetExistingAddress",
                  "Plugins/PaymentPayPalExpressCheckout/SetExistingAddress",
-                 new { controller = "PaymentPayPalExpressCheckout", action = "SetExistingAddress" },
-                 new[] { "Nop.Plugin.Payments.PayPalExpressCheckout.Controllers" }
-                 );
+                 new { controller = "PaymentPayPalExpressCheckout", action = "SetExistingAddress" });
 
             // set new shipping address
-            routes.MapRoute("Plugin.Payments.PayPalExpressCheckout.SetShippingAddress",
+            routeBuilder.MapRoute("Plugin.Payments.PayPalExpressCheckout.SetShippingAddress",
                  "Plugins/PaymentPayPalExpressCheckout/SetShippingAddress",
-                 new { controller = "PaymentPayPalExpressCheckout", action = "SetShippingAddress" },
-                 new[] { "Nop.Plugin.Payments.PayPalExpressCheckout.Controllers" }
-                 );
+                 new { controller = "PaymentPayPalExpressCheckout", action = "SetShippingAddress" });
 
             // set shipping method
-            routes.MapRoute("Plugin.Payments.PayPalExpressCheckout.SetShippingMethod",
+            routeBuilder.MapRoute("Plugin.Payments.PayPalExpressCheckout.SetShippingMethod",
                  "Plugins/PaymentPayPalExpressCheckout/SetShippingMethod",
-                 new { controller = "PaymentPayPalExpressCheckout", action = "SetShippingMethod" },
-                 new[] { "Nop.Plugin.Payments.PayPalExpressCheckout.Controllers" }
-                 );
-            
+                 new { controller = "PaymentPayPalExpressCheckout", action = "SetShippingMethod" });
+
             // Confirm order
-            routes.MapRoute("Plugin.Payments.PayPalExpressCheckout.Confirm",
+            routeBuilder.MapRoute("Plugin.Payments.PayPalExpressCheckout.Confirm",
                  "Plugins/PaymentPayPalExpressCheckout/Confirm",
-                 new { controller = "PaymentPayPalExpressCheckout", action = "Confirm" },
-                 new[] { "Nop.Plugin.Payments.PayPalExpressCheckout.Controllers" }
-                 );
+                 new { controller = "PaymentPayPalExpressCheckout", action = "Confirm" });
 
             //IPN
-            routes.MapRoute("Plugin.Payments.PayPalExpressCheckout.IPNHandler",
+            routeBuilder.MapRoute("Plugin.Payments.PayPalExpressCheckout.IPNHandler",
                  "Plugins/PaymentPayPalExpressCheckout/IPNHandler",
-                 new { controller = "PaymentPayPalExpressCheckout", action = "IPNHandler" },
-                 new[] { "Nop.Plugin.Payments.PayPalExpressCheckout.Controllers" }
-            );
+                 new { controller = "PaymentPayPalExpressCheckout", action = "IPNHandler" });
         }
 
         public int Priority

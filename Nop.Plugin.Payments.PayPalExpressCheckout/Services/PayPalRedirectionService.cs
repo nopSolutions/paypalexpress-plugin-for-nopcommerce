@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
 using Nop.Core;
 using Nop.Core.Domain.Logging;
 using Nop.Core.Domain.Orders;
@@ -11,6 +10,8 @@ using Nop.Services.Customers;
 using Nop.Services.Logging;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Helpers;
 using Nop.Services.Payments;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Nop.Core.Http.Extensions;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
@@ -25,18 +26,18 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         private readonly IPayPalCheckoutDetailsService _payPalCheckoutDetailsService;
         private readonly IWorkContext _workContext;
         private readonly ICustomerService _customerService;
-        private readonly HttpSessionStateBase _session;
+        private readonly ISession _session;
 
         public PayPalRedirectionService(IPayPalInterfaceService payPalInterfaceService,
-                                        IPayPalSecurityService payPalSecurityService,
-                                        IPayPalRequestService payPalRequestService,
-                                        IPayPalUrlService payPalUrlService,
-                                        ILogger logger,
-                                        IWebHelper webHelper,
-                                        IPayPalCheckoutDetailsService payPalCheckoutDetailsService,
-                                        IWorkContext workContext,
-                                        ICustomerService customerService,
-                                        HttpSessionStateBase session)
+            IPayPalSecurityService payPalSecurityService,
+            IPayPalRequestService payPalRequestService,
+            IPayPalUrlService payPalUrlService,
+            ILogger logger,
+            IWebHelper webHelper,
+            IPayPalCheckoutDetailsService payPalCheckoutDetailsService,
+            IWorkContext workContext,
+            ICustomerService customerService,
+            IHttpContextAccessor httpContextAccessor)
         {
             _payPalInterfaceService = payPalInterfaceService;
             _payPalSecurityService = payPalSecurityService;
@@ -47,10 +48,10 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             _payPalCheckoutDetailsService = payPalCheckoutDetailsService;
             _workContext = workContext;
             _customerService = customerService;
-            _session = session;
+            _session = httpContextAccessor.HttpContext.Session;
         }
 
-        public string ProcessSubmitButton(IList<ShoppingCartItem> cart, TempDataDictionary tempData)
+        public string ProcessSubmitButton(IList<ShoppingCartItem> cart, ITempDataDictionary tempData)
         {
             using (var payPalApiaaInterface = _payPalInterfaceService.GetAAService())
             {
@@ -96,7 +97,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                     var request =
                         _payPalCheckoutDetailsService.SetCheckoutDetails(
                             details.GetExpressCheckoutDetailsResponseDetails);
-                    _session["OrderPaymentInfo"] = request;
+                    _session.Set("OrderPaymentInfo", request);
 
                     var customer = _customerService.GetCustomerById(request.CustomerId);
 

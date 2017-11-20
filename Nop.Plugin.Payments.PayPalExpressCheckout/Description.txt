@@ -1,9 +1,0 @@
-﻿Group: Payment methods
-FriendlyName: PayPal Express Checkout
-SystemName: Payments.PayPalExpressCheckout
-Version: 1.2
-SupportedVersions: 3.90
-Author: nopCommerce team, Thought Consultancy - http://www.thought.co.uk
-DisplayOrder: 1
-FileName: Nop.Plugin.Payments.PayPalExpressCheckout.dll
-Description: This plugin allows paying with PayPal Express Checkout

@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
-using System.Web.Routing;
+using Microsoft.AspNetCore.Http;
+using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
+using Nop.Core.Http.Extensions;
 using Nop.Core.Plugins;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Controllers;
 using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
@@ -21,7 +22,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
     {
         #region Fields
 
-        private readonly HttpSessionStateBase _session;
+        private readonly ISession _session;
         private readonly ILocalizationService _localizationService;
         private readonly IOrderTotalCalculationService _orderTotalCalculationService;
         private readonly IPayPalInterfaceService _payPalInterfaceService;
@@ -29,21 +30,23 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
         private readonly IPayPalSecurityService _payPalSecurityService;        
         private readonly ISettingService _settingService;
         private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
+        private readonly IWebHelper _webHelper;
 
         #endregion
 
         #region Ctor
 
-        public PayPalExpressCheckoutPaymentProcessor(HttpSessionStateBase session,
+        public PayPalExpressCheckoutPaymentProcessor(IHttpContextAccessor httpContextAccessor,
             ILocalizationService localizationService,
             IOrderTotalCalculationService orderTotalCalculationService,
             IPayPalInterfaceService payPalInterfaceService,
             IPayPalRequestService payPalRequestService,
             IPayPalSecurityService payPalSecurityService,        
             ISettingService settingService,
-            PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings)
+            PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings,
+            IWebHelper webHelper)
         {
-            _session = session;
+            _session = httpContextAccessor.HttpContext.Session;
             _localizationService = localizationService;
             _orderTotalCalculationService = orderTotalCalculationService;
             _payPalInterfaceService = payPalInterfaceService;
@@ -51,6 +54,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
             _payPalSecurityService = payPalSecurityService;            
             _settingService = settingService;
             _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
+            this._webHelper = webHelper;
         }
 
         #endregion
@@ -70,7 +74,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
                 var doExpressCheckoutPaymentResponseType =
                     payPalApiaaInterfaceClient.DoExpressCheckoutPayment(ref customSecurityHeaderType,
                                                                         _payPalRequestService.GetDoExpressCheckoutPaymentRequest(processPaymentRequest));
-                _session["express-checkout-response-type"] = doExpressCheckoutPaymentResponseType;
+                _session.Set("express-checkout-response-type", doExpressCheckoutPaymentResponseType);
 
                 return doExpressCheckoutPaymentResponseType.HandleResponse(new ProcessPaymentResult(),
                 (paymentResult, type) =>
@@ -160,7 +164,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
                                                response.Errors.AddErrors(paymentResult.AddError),
                                                capturePaymentRequest.Order.OrderGuid);
             }
-
         }
 
         /// <summary>
@@ -274,30 +277,24 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
             return typeof(PaymentPayPalExpressCheckoutController);
         }
 
-        /// <summary>
-        /// Gets a route for provider configuration
-        /// </summary>
-        /// <param name="actionName">Action name</param>
-        /// <param name="controllerName">Controller name</param>
-        /// <param name="routeValues">Route values</param>
-        public void GetConfigurationRoute(out string actionName, out string controllerName, out RouteValueDictionary routeValues)
+        public override string GetConfigurationPageUrl()
         {
-            actionName = "Configure";
-            controllerName = "PaymentPayPalExpressCheckout";
-            routeValues = new RouteValueDictionary { { "Namespaces", "Nop.Plugin.Payments.PayPalExpressCheckout.Controllers" }, { "area", null } };
+            return $"{_webHelper.GetStoreLocation()}Admin/PaymentPayPalExpressCheckout/Configure";
         }
 
-        /// <summary>
-        /// Gets a route for payment info
-        /// </summary>
-        /// <param name="actionName">Action name</param>
-        /// <param name="controllerName">Controller name</param>
-        /// <param name="routeValues">Route values</param>
-        public void GetPaymentInfoRoute(out string actionName, out string controllerName, out RouteValueDictionary routeValues)
+        public void GetPublicViewComponent(out string viewComponentName)
         {
-            actionName = "PaymentInfo";
-            controllerName = "PaymentPayPalExpressCheckout";
-            routeValues = new RouteValueDictionary { { "Namespaces", "Nop.Plugin.Payments.PayPalExpressCheckout.Controllers" }, { "area", null } };
+            viewComponentName = "PaymentPayPalExpressCheckout";
+        }
+
+        public IList<string> ValidatePaymentForm(IFormCollection form)
+        {
+            return new List<string>();
+        }
+
+        public ProcessPaymentRequest GetPaymentInfo(IFormCollection form)
+        {
+            return new ProcessPaymentRequest();
         }
 
         /// <summary>

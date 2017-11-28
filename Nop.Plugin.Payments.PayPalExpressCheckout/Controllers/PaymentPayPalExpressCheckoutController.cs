@@ -189,7 +189,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             return RedirectToAction("SetShippingMethod");
         }
 
-        public ActionResult SetShippingMethod()
+        public IActionResult SetShippingMethod()
         {
             var cart = _payPalExpressCheckoutService.GetCart();
 
@@ -202,7 +202,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
         }
 
         [HttpPost, ActionName("SetShippingMethod")]
-        public ActionResult SetShippingMethod(string shippingoption)
+        public IActionResult SetShippingMethod(string shippingoption)
         {
             //validation
             var cart = _payPalExpressCheckoutService.GetCart();
@@ -223,7 +223,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             return RedirectToAction(success ? "Confirm" : "SetShippingMethod");
         }
 
-        public ActionResult Confirm()
+        public IActionResult Confirm()
         {
             //validation
             var cart = _payPalExpressCheckoutService.GetCart();
@@ -240,7 +240,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
         }
 
         [HttpPost, ActionName("Confirm")]
-        public ActionResult ConfirmOrder()
+        public IActionResult ConfirmOrder()
         {
             //validation
             var cart = _payPalExpressCheckoutService.GetCart();
@@ -265,7 +265,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             return View("~/Plugins/Payments.PayPalExpressCheckout/Views/Confirm.cshtml", checkoutPlaceOrderModel);
         }
 
-        public ActionResult IPNHandler()
+        public IActionResult IPNHandler()
         {
             using (var ms = new MemoryStream())
             {

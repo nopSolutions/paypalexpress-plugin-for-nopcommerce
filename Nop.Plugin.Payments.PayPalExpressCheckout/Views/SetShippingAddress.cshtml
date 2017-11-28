@@ -1,5 +1,4 @@
-﻿@using Nop.Web.Framework
-@using Nop.Web.Framework.UI
+﻿@using Nop.Web.Framework.UI
 @model Nop.Plugin.Payments.PayPalExpressCheckout.Models.CheckoutShippingAddressModel
 @{
     Layout = "~/Views/Shared/_ColumnsOne.cshtml";
@@ -12,7 +11,7 @@
         <h1>@T("Checkout.ShippingAddress")</h1>
     </div>
     <div class="page-body checkout-data">
-        @Html.Widget("checkout_shipping_address_top")
+        @await Component.InvokeAsync("Widget", new { widgetZone = "checkout_shipping_address_top" })
         @if (Model.ExistingAddresses.Count > 0)
         {
             <div class="section select-shipping-address">
@@ -46,7 +45,7 @@
                                             @item.FaxNumber
                                     </li>
                                 }
-                                @if (item.CompanyEnabled && !String.IsNullOrEmpty(item.Company))
+                                @if (item.CompanyEnabled && !string.IsNullOrEmpty(item.Company))
                                 {
                                     <li class="company">
                                         @item.Company
@@ -58,7 +57,7 @@
                                         @item.Address1
                                     </li>
                                 }
-                                @if (item.StreetAddress2Enabled && !String.IsNullOrEmpty(item.Address2))
+                                @if (item.StreetAddress2Enabled && !string.IsNullOrEmpty(item.Address2))
                                 {
                                     <li class="address2">
                                         @item.Address2
@@ -85,7 +84,7 @@
                                         }
                                     </li>
                                 }
-                                @if (item.CountryEnabled && !String.IsNullOrEmpty(item.CountryName))
+                                @if (item.CountryEnabled && !string.IsNullOrEmpty(item.CountryName))
                                 {
                                     <li class="country">
                                         @item.CountryName
@@ -97,7 +96,7 @@
                 </div>
             </div>
         }
-        @Html.Widget("checkout_shipping_address_middle")
+        @await Component.InvokeAsync("Widget", new { widgetZone = "checkout_shipping_address_middle" })
         <div class="section new-shipping-address">
             <div class="title">
                 @if (Model.ExistingAddresses.Count > 0)
@@ -114,11 +113,9 @@
                 {
                     <div class="enter-address-body">
                         @{
-                    var dataDictAddress = new ViewDataDictionary();
-                    //Merge ModelState (required for validation)
-                    dataDictAddress.ModelState.Merge(ViewData.ModelState);
-                    dataDictAddress.TemplateInfo.HtmlFieldPrefix = "NewAddress";
-                            @Html.Partial("Nop.Plugin.Payments.PayPalExpressCheckout.Views._CreateOrUpdateAddress", Model.NewAddress, dataDictAddress)              
+                            var dataDictAddress = new ViewDataDictionary(ViewData);
+                            dataDictAddress.TemplateInfo.HtmlFieldPrefix = "NewAddress";
+                            @await Html.PartialAsync("~/Plugins/Payments.PayPalExpressCheckout/Views/_CreateOrUpdateAddress.cshtml", Model.NewAddress)
                         }
                     </div>
                     <div class="buttons">
@@ -127,12 +124,12 @@
                 }
             </div>
         </div>
-        @Html.Widget("checkout_shipping_address_bottom")
-        <div class="section order-summary-body">
+        @await Component.InvokeAsync("Widget", new { widgetZone = "checkout_shipping_address_bottom" })
+        <div class="section order-summary">
             <div class="title">
                 <strong>@T("Checkout.OrderSummary")</strong>
             </div>
-            @Html.Action("OrderSummary", "ShoppingCart")
+            @await Component.InvokeAsync("OrderSummary")
         </div>
     </div>
 </div>

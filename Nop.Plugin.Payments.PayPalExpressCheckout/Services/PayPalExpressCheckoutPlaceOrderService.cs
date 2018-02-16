@@ -71,7 +71,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 {
                     var doExpressCheckoutPaymentResponseType = _session.Get<DoExpressCheckoutPaymentResponseType>("express-checkout-response-type");
                     doExpressCheckoutPaymentResponseType?.LogOrderNotes(placeOrderResult.PlacedOrder.OrderGuid);
-                    _session.Set("OrderPaymentInfo", null);
+                    _session.Remove("OrderPaymentInfo");
                     var postProcessPaymentRequest = new PostProcessPaymentRequest
                     {
                         Order = placeOrderResult.PlacedOrder

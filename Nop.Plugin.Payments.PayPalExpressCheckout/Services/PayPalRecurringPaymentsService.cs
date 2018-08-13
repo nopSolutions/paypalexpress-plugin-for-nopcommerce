@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Globalization;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Directory;
@@ -16,16 +15,17 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
     {
         private readonly ICustomerService _customerService;
         private readonly IStoreService _storeService;
-        private readonly IOrderService _orderService;
         private readonly IPayPalCurrencyCodeParser _payPalCurrencyCodeParser;
         private readonly IWorkContext _workContext;
 
-        public PayPalRecurringPaymentsService(ICustomerService customerService, IStoreService storeService, IOrderService orderService, IPayPalCurrencyCodeParser payPalCurrencyCodeParser,
+        public PayPalRecurringPaymentsService(ICustomerService customerService,
+            IStoreService storeService,
+            IPayPalCurrencyCodeParser
+            payPalCurrencyCodeParser,
             IWorkContext workContext)
         {
             _customerService = customerService;
             _storeService = storeService;
-            _orderService = orderService;
             _payPalCurrencyCodeParser = payPalCurrencyCodeParser;
             this._workContext = workContext;
         }

@@ -5,15 +5,12 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
     public class PayPalUrlService : IPayPalUrlService
     {
-        private readonly IStoreContext _storeContext;
         private readonly IWebHelper _webHelper;
         private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
 
-        public PayPalUrlService(IStoreContext storeContext, 
-            IWebHelper webHelper,
+        public PayPalUrlService(IWebHelper webHelper,
             PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings)
         {
-            _storeContext = storeContext;
             _webHelper = webHelper;
             _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
         }

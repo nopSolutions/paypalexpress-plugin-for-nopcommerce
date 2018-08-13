@@ -19,7 +19,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
     public class PaymentPayPalExpressCheckoutController : BasePaymentController
     {
         #region Fields
-  
+
         private readonly IPayPalExpressCheckoutConfirmOrderService _payPalExpressCheckoutConfirmOrderService;
         private readonly IPayPalExpressCheckoutPlaceOrderService _payPalExpressCheckoutPlaceOrderService;
         private readonly IPayPalExpressCheckoutService _payPalExpressCheckoutService;
@@ -27,6 +27,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
         private readonly IPayPalIPNService _payPalIPNService;
         private readonly IPayPalRedirectionService _payPalRedirectionService;
         private readonly ISettingService _settingService;
+        private readonly IShoppingCartService _shoppingCartService;
         private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
 
         #endregion
@@ -40,6 +41,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             IPayPalIPNService payPalIPNService,
             IPayPalRedirectionService payPalRedirectionService,
             ISettingService settingService,
+            IShoppingCartService shoppingCartService,
             PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings)
         {
             _payPalExpressCheckoutConfirmOrderService = payPalExpressCheckoutConfirmOrderService;
@@ -49,6 +51,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             _payPalIPNService = payPalIPNService;
             _payPalRedirectionService = payPalRedirectionService;
             _settingService = settingService;
+            _shoppingCartService = shoppingCartService;
             _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
         }
 
@@ -193,7 +196,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
         {
             var cart = _payPalExpressCheckoutService.GetCart();
 
-            if (!cart.RequiresShipping())
+            if (!_shoppingCartService.ShoppingCartRequiresShipping(cart))
                 return RedirectToAction("Confirm");
 
             var model = _payPalExpressCheckoutShippingMethodService.PrepareShippingMethodModel(cart);
@@ -212,7 +215,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             if (!_payPalExpressCheckoutService.IsAllowedToCheckout())
                 return new UnauthorizedResult();
 
-            if (!cart.RequiresShipping())
+            if (!_shoppingCartService.ShoppingCartRequiresShipping(cart))
             {
                 _payPalExpressCheckoutShippingMethodService.SetShippingMethodToNull();
                 return RedirectToAction("Confirm");

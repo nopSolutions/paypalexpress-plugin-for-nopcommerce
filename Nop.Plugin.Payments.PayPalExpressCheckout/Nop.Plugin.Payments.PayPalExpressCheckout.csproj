@@ -1,12 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net461</TargetFramework>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
     <Copyright>Copyright © Nop Solutions, Ltd</Copyright> 
     <Company>Nop Solutions, Ltd</Company> 
     <Authors>Nop Solutions, Ltd</Authors> 
-    <Version>1.30</Version> 
-    <Description>This plugin allows paying with PayPal Express Checkout</Description> 
     <PackageLicenseUrl></PackageLicenseUrl> 
     <PackageProjectUrl>https://www.nopcommerce.com/p/1149/paypal-express-payment-plugin.aspx</PackageProjectUrl> 
     <RepositoryUrl>https://github.com/nopSolutions/paypalexpress-plugin-for-nopcommerce</RepositoryUrl> 

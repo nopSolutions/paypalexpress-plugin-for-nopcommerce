@@ -1,5 +1,4 @@
-﻿using System.Net;
-using System.ServiceModel;
+﻿using System.ServiceModel;
 using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services

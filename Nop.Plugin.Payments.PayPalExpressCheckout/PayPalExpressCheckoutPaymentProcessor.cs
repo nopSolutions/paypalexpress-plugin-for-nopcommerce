@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Nop.Core;
@@ -7,13 +6,11 @@ using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Core.Http.Extensions;
 using Nop.Core.Plugins;
-using Nop.Plugin.Payments.PayPalExpressCheckout.Controllers;
 using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Services;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Payments;
-using Nop.Services.Orders;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Helpers;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout
@@ -24,10 +21,10 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
 
         private readonly ISession _session;
         private readonly ILocalizationService _localizationService;
-        private readonly IOrderTotalCalculationService _orderTotalCalculationService;
+        private readonly IPaymentService _paymentService;
         private readonly IPayPalInterfaceService _payPalInterfaceService;
         private readonly IPayPalRequestService _payPalRequestService;
-        private readonly IPayPalSecurityService _payPalSecurityService;        
+        private readonly IPayPalSecurityService _payPalSecurityService;
         private readonly ISettingService _settingService;
         private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
         private readonly IWebHelper _webHelper;
@@ -38,23 +35,23 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
 
         public PayPalExpressCheckoutPaymentProcessor(IHttpContextAccessor httpContextAccessor,
             ILocalizationService localizationService,
-            IOrderTotalCalculationService orderTotalCalculationService,
+            IPaymentService paymentService,
             IPayPalInterfaceService payPalInterfaceService,
             IPayPalRequestService payPalRequestService,
-            IPayPalSecurityService payPalSecurityService,        
+            IPayPalSecurityService payPalSecurityService,
             ISettingService settingService,
             PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings,
             IWebHelper webHelper)
         {
             _session = httpContextAccessor.HttpContext.Session;
             _localizationService = localizationService;
-            _orderTotalCalculationService = orderTotalCalculationService;
+            _paymentService = paymentService;
             _payPalInterfaceService = payPalInterfaceService;
             _payPalRequestService = payPalRequestService;
-            _payPalSecurityService = payPalSecurityService;            
+            _payPalSecurityService = payPalSecurityService;
             _settingService = settingService;
             _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
-            this._webHelper = webHelper;
+            _webHelper = webHelper;
         }
 
         #endregion
@@ -131,10 +128,8 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
         /// <returns>Additional handling fee</returns>
         public decimal GetAdditionalHandlingFee(IList<ShoppingCartItem> cart)
         {
-            var result = this.CalculateAdditionalFee(_orderTotalCalculationService, cart,
+            return _paymentService.CalculateAdditionalFee(cart,
                 _payPalExpressCheckoutPaymentSettings.AdditionalFee, _payPalExpressCheckoutPaymentSettings.AdditionalFeePercentage);
-
-            return result;
         }
 
         /// <summary>
@@ -268,23 +263,14 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
             return false;
         }
 
-        /// <summary>
-        /// Get type of the controller
-        /// </summary>
-        /// <returns>Controller type</returns>
-        public Type GetControllerType()
-        {
-            return typeof(PaymentPayPalExpressCheckoutController);
-        }
-
         public override string GetConfigurationPageUrl()
         {
             return $"{_webHelper.GetStoreLocation()}Admin/PaymentPayPalExpressCheckout/Configure";
         }
 
-        public void GetPublicViewComponent(out string viewComponentName)
+        public string GetPublicViewComponentName()
         {
-            viewComponentName = "PaymentPayPalExpressCheckout";
+            return "PaymentPayPalExpressCheckout";
         }
 
         public IList<string> ValidatePaymentForm(IFormCollection form)
@@ -306,35 +292,35 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
             _settingService.SaveSetting(new PayPalExpressCheckoutPaymentSettings());
 
             // locales
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFee", "Additional fee");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFee.Hint", "Enter additional fee to charge your customers.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFeePercentage", "Additional fee. Use percentage");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFeePercentage.Hint", "Determines whether to apply a percentage additional fee to the order total. If not enabled, a fixed value is used.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.ApiSignature", "API Signature");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.ApiSignature.Hint", "The API Signature specified in your PayPal account.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.CartBorderColor", "Cart Border Color");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.CartBorderColor.Hint", "The color of the cart border on the PayPal page in a 6-character HTML hexadecimal ASCII color code format.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.DoNotHaveBusinessAccount", "I do not have a PayPal Business Account");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.DoNotHaveBusinessAccount.Hint", "I do not have a PayPal Business Account.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.EmailAddress", "Email Address");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.EmailAddress.Hint", "The email address to use if you don't have a PayPal Pro account. If you have an account, use that email, otherwise use one that you will use to create an account with to retrieve your funds.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.EnableDebugLogging", "Enable debug logging");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.EnableDebugLogging.Hint", "Allow the plugin to write extra info to the system log table.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.IsLive", "Live?");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.IsLive.Hint", "Check this box to make the system live (i.e. exit sandbox mode).");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.LocaleCode", "Locale Code");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.LocaleCode.Hint", "Locale of pages displayed by PayPal during Express Checkout.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.LogoImageURL", "Banner Image URL");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.LogoImageURL.Hint", "URL for the image you want to appear at the top left of the payment page. The image has a maximum size of 750 pixels wide by 90 pixels high. PayPal recommends that you provide an image that is stored on a secure (https) server. If you do not specify an image, the business name displays.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Password", "Password");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Password.Hint", "The API Password specified in your PayPal account (this is not your PayPal account password).");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.PaymentAction", "Payment Action");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.PaymentAction.Hint", "Select whether you want to make a final sale, or authorise and capture at a later date (i.e. upon fulfilment).");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.RequireConfirmedShippingAddress", "Require Confirmed Shipping Address");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.RequireConfirmedShippingAddress.Hint", "Indicates whether or not you require the buyer’s shipping address on file with PayPal be a confirmed address.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Username", "Username");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Username.Hint", "The API Username specified in your PayPal account (this is not your PayPal account email)");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.PaymentMethodDescription", "Pay by PayPal");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFee", "Additional fee");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFee.Hint", "Enter additional fee to charge your customers.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFeePercentage", "Additional fee. Use percentage");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFeePercentage.Hint", "Determines whether to apply a percentage additional fee to the order total. If not enabled, a fixed value is used.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.ApiSignature", "API Signature");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.ApiSignature.Hint", "The API Signature specified in your PayPal account.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.CartBorderColor", "Cart Border Color");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.CartBorderColor.Hint", "The color of the cart border on the PayPal page in a 6-character HTML hexadecimal ASCII color code format.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.DoNotHaveBusinessAccount", "I do not have a PayPal Business Account");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.DoNotHaveBusinessAccount.Hint", "I do not have a PayPal Business Account.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.EmailAddress", "Email Address");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.EmailAddress.Hint", "The email address to use if you don't have a PayPal Pro account. If you have an account, use that email, otherwise use one that you will use to create an account with to retrieve your funds.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.EnableDebugLogging", "Enable debug logging");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.EnableDebugLogging.Hint", "Allow the plugin to write extra info to the system log table.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.IsLive", "Live?");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.IsLive.Hint", "Check this box to make the system live (i.e. exit sandbox mode).");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.LocaleCode", "Locale Code");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.LocaleCode.Hint", "Locale of pages displayed by PayPal during Express Checkout.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.LogoImageURL", "Banner Image URL");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.LogoImageURL.Hint", "URL for the image you want to appear at the top left of the payment page. The image has a maximum size of 750 pixels wide by 90 pixels high. PayPal recommends that you provide an image that is stored on a secure (https) server. If you do not specify an image, the business name displays.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Password", "Password");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Password.Hint", "The API Password specified in your PayPal account (this is not your PayPal account password).");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.PaymentAction", "Payment Action");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.PaymentAction.Hint", "Select whether you want to make a final sale, or authorise and capture at a later date (i.e. upon fulfilment).");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.RequireConfirmedShippingAddress", "Require Confirmed Shipping Address");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.RequireConfirmedShippingAddress.Hint", "Indicates whether or not you require the buyer’s shipping address on file with PayPal be a confirmed address.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Username", "Username");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Username.Hint", "The API Username specified in your PayPal account (this is not your PayPal account email)");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.PaymentMethodDescription", "Pay by PayPal");
 
             base.Install();
         }
@@ -348,35 +334,35 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
             _settingService.DeleteSetting<PayPalExpressCheckoutPaymentSettings>();
 
             // locales
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFee");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFee.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFeePercentage");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFeePercentage.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.ApiSignature");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.ApiSignature.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.CartBorderColor");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.CartBorderColor.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.DoNotHaveBusinessAccount");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.DoNotHaveBusinessAccount.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.EmailAddress");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.EmailAddress.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.EnableDebugLogging");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.EnableDebugLogging.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.IsLive");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.IsLive.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.LocaleCode");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.LocaleCode.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.LogoImageURL");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.LogoImageURL.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Password");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Password.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.PaymentAction");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.PaymentAction.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.RequireConfirmedShippingAddress");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.RequireConfirmedShippingAddress.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Username");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Username.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.PaymentMethodDescription");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFee");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFee.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFeePercentage");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFeePercentage.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.ApiSignature");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.ApiSignature.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.CartBorderColor");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.CartBorderColor.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.DoNotHaveBusinessAccount");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.DoNotHaveBusinessAccount.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.EmailAddress");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.EmailAddress.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.EnableDebugLogging");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.EnableDebugLogging.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.IsLive");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.IsLive.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.LocaleCode");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.LocaleCode.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.LogoImageURL");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.LogoImageURL.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Password");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Password.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.PaymentAction");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.PaymentAction.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.RequireConfirmedShippingAddress");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.RequireConfirmedShippingAddress.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Username");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.Username.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.PaymentMethodDescription");
 
             base.Uninstall();
         }

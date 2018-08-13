@@ -42,9 +42,9 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
                 model.Email = address.Email;
                 model.Company = address.Company;
                 model.CountryId = address.CountryId;
-                model.CountryName = address.Country?.GetLocalized(x => x.Name);
+                model.CountryName = address.Country !=null ? localizationService.GetLocalized(address.Country, x => x.Name) : null;
                 model.StateProvinceId = address.StateProvinceId;
-                model.StateProvinceName = address.StateProvince?.GetLocalized(x => x.Name);
+                model.StateProvinceName = address.StateProvince !=null ? localizationService.GetLocalized(address.StateProvince, x => x.Name) : null;
                 model.City = address.City;
                 model.Address1 = address.Address1;
                 model.Address2 = address.Address2;
@@ -64,7 +64,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
                 {
                     model.AvailableCountries.Add(new SelectListItem
                     {
-                        Text = c.GetLocalized(x => x.Name),
+                        Text = localizationService.GetLocalized(c, x =>x.Name),
                         Value = c.Id.ToString(),
                         Selected = c.Id == model.CountryId
                     });
@@ -85,8 +85,8 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
                         {
                             model.AvailableStates.Add(new SelectListItem
                                                           {
-                                                              Text = s.GetLocalized(x => x.Name),
-                                                              Value = s.Id.ToString(), 
+                                                              Text = localizationService.GetLocalized(s, x =>x.Name),
+                                                              Value = s.Id.ToString(),
                                                               Selected = (s.Id == model.StateProvinceId)
                                                           });
                         }

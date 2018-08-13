@@ -12,20 +12,20 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
     public class PayPalExpressCheckoutService : IPayPalExpressCheckoutService
     {
-        private readonly IWorkContext _workContext;
-        private readonly IStoreContext _storeContext;
-        private readonly OrderSettings _orderSettings;
         private readonly IOrderService _orderService;
+        private readonly IStoreContext _storeContext;
+        private readonly IWorkContext _workContext;
+        private readonly OrderSettings _orderSettings;
 
-        public PayPalExpressCheckoutService(IWorkContext workContext, 
-        IStoreContext storeContext,
-        OrderSettings orderSettings,
-        IOrderService orderService)
+        public PayPalExpressCheckoutService(IOrderService orderService,
+            IStoreContext storeContext,
+            IWorkContext workContext,
+            OrderSettings orderSettings)
         {
-            _workContext = workContext;
-            _storeContext = storeContext;
-            _orderSettings = orderSettings;
             _orderService = orderService;
+            _storeContext = storeContext;
+            _workContext = workContext;
+            _orderSettings = orderSettings;
         }
 
         public IList<ShoppingCartItem> GetCart()

@@ -15,25 +15,34 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
     public class PayPalCheckoutDetailsService : IPayPalCheckoutDetailsService
     {
-        private readonly IWorkContext _workContext;
-        private readonly ICustomerService _customerService;
-        private readonly IStateProvinceService _stateProvinceService;
+        private readonly IAddressService _addressService;
         private readonly ICountryService _countryService;
+        private readonly ICustomerService _customerService;
         private readonly IGenericAttributeService _genericAttributeService;
+        private readonly IShoppingCartService _shoppingCartService;
+        private readonly IStateProvinceService _stateProvinceService;
+        private readonly IWorkContext _workContext;
 
-        public PayPalCheckoutDetailsService(IWorkContext workContext, ICustomerService customerService, IStateProvinceService stateProvinceService, ICountryService countryService, IGenericAttributeService genericAttributeService)
+        public PayPalCheckoutDetailsService(IAddressService addressService,
+            ICountryService countryService,
+            ICustomerService customerService,
+            IGenericAttributeService genericAttributeService,
+            IShoppingCartService shoppingCartService,
+            IStateProvinceService stateProvinceService,
+            IWorkContext workContext)
         {
-            _workContext = workContext;
-            _customerService = customerService;
-            _stateProvinceService = stateProvinceService;
+            _addressService = addressService;
             _countryService = countryService;
+            _customerService = customerService;
             _genericAttributeService = genericAttributeService;
+            _shoppingCartService = shoppingCartService;
+            _stateProvinceService = stateProvinceService;
+            _workContext = workContext;
         }
 
         public ProcessPaymentRequest SetCheckoutDetails(GetExpressCheckoutDetailsResponseDetailsType checkoutDetails)
         {
             // get customer & cart
-            //var customer = customer;
             int customerId = Convert.ToInt32(_workContext.CurrentCustomer.Id.ToString());
             var customer = _customerService.GetCustomerById(customerId);
 
@@ -59,12 +68,12 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             if (billingCountry != null)
                 billingCountryId = billingCountry.Id;
 
-            var billingAddress = customer.Addresses.ToList().FindAddress(
+            var billingAddress = _addressService.FindAddress(_workContext.CurrentCustomer.Addresses.ToList(),
                 billingFirstName, billingLastName, billingPhoneNumber,
-                billingEmail, string.Empty, string.Empty, billingAddress1, billingAddress2, billingCity,
-                billingStateProvinceId, billingZipPostalCode, billingCountryId,
-                //TODO process custom attributes
-                null);
+                billingEmail, string.Empty, string.Empty,
+                billingAddress1, billingAddress2, billingCity,
+                billingCountry?.Name, billingStateProvinceId, billingZipPostalCode,
+                billingCountryId, null);    //TODO process custom attributes
 
             if (billingAddress == null)
             {
@@ -91,9 +100,9 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             customer.BillingAddress = billingAddress;
             _customerService.UpdateCustomer(customer);
 
-            _genericAttributeService.SaveAttribute<ShippingOption>(customer, SystemCustomerAttributeNames.SelectedShippingOption, null);
+            _genericAttributeService.SaveAttribute<ShippingOption>(customer, NopCustomerDefaults.SelectedShippingOptionAttribute, null, customer.RegisteredInStoreId);
 
-            bool shoppingCartRequiresShipping = cart.RequiresShipping();
+            bool shoppingCartRequiresShipping = _shoppingCartService.ShoppingCartRequiresShipping(cart);
             if (shoppingCartRequiresShipping)
             {
                 var paymentDetails = checkoutDetails.PaymentDetails.FirstOrDefault();
@@ -122,13 +131,13 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 if (shippingCountry != null)
                     shippingCountryId = shippingCountry.Id;
 
-                var shippingAddress = customer.Addresses.ToList().FindAddress(
+                var shippingAddress = _addressService.FindAddress(_workContext.CurrentCustomer.Addresses.ToList(),
                     shippingFirstName, shippingLastName, shippingPhoneNumber,
                     shippingEmail, string.Empty, string.Empty,
                     shippingAddress1, shippingAddress2, shippingCity,
-                    shippingStateProvinceId, shippingZipPostalCode, shippingCountryId,
-                    //TODO process custom attributes
-                null);
+                    shippingCountry?.Name, shippingStateProvinceId, shippingZipPostalCode,
+                    shippingCountryId, null);    //TODO process custom attributes
+
 
                 if (shippingAddress == null)
                 {

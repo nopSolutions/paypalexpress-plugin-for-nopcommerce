@@ -76,10 +76,10 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             var items = GetPaymentDetailsItems(cart);
 
             // checkout attributes
-            var customer = cart.GetCustomer();
+            var customer = _workContext.CurrentCustomer;
             if (customer != null)
             {
-                var checkoutAttributesXml = customer.GetAttribute<string>(SystemCustomerAttributeNames.CheckoutAttributes, _genericAttributeService, _storeContext.CurrentStore.Id);
+                var checkoutAttributesXml = _genericAttributeService.GetAttribute<string>(customer, NopCustomerDefaults.CheckoutAttributes, _storeContext.CurrentStore.Id);
                 var caValues = _checkoutAttributeParser.ParseCheckoutAttributeValues(checkoutAttributesXml);
                 if (caValues != null)
                 {

@@ -58,7 +58,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 //performance optimization. cache returned shipping options.
                 //we'll use them later (after a customer has selected an option).
                 _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer,
-                                                       SystemCustomerAttributeNames.OfferedShippingOptions,
+                                                       NopCustomerDefaults.OfferedShippingOptionsAttribute,
                                                        getShippingOptionResponse.ShippingOptions,
                                                        _storeContext.CurrentStore.Id);
 
@@ -84,7 +84,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 }
 
                 //find a selected (previously) shipping method
-                var selectedShippingOption = _workContext.CurrentCustomer.GetAttribute<ShippingOption>(SystemCustomerAttributeNames.SelectedShippingOption, _storeContext.CurrentStore.Id);
+                var selectedShippingOption = _genericAttributeService.GetAttribute<ShippingOption>(_workContext.CurrentCustomer, NopCustomerDefaults.SelectedShippingOptionAttribute, _storeContext.CurrentStore.Id);
                 if (selectedShippingOption != null)
                 {
                     var shippingOptionToSelect = model.ShippingMethods.ToList()
@@ -121,7 +121,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
             //find it
             //performance optimization. try cache first
-            var shippingOptions = _workContext.CurrentCustomer.GetAttribute<List<ShippingOption>>(SystemCustomerAttributeNames.OfferedShippingOptions, _storeContext.CurrentStore.Id);
+            var shippingOptions = _genericAttributeService.GetAttribute<List<ShippingOption>>(_workContext.CurrentCustomer, NopCustomerDefaults.OfferedShippingOptionsAttribute, _storeContext.CurrentStore.Id);
             if (shippingOptions == null || shippingOptions.Count == 0)
             {
                 //not found? let's load them using shipping service
@@ -144,15 +144,16 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 return false;
 
             //save
-            _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedShippingOption, shippingOption, _storeContext.CurrentStore.Id);
-            
+            _genericAttributeService.SaveAttribute<ShippingOption>(_workContext.CurrentCustomer, 
+                NopCustomerDefaults.SelectedShippingOptionAttribute, shippingOption, _storeContext.CurrentStore.Id);
+
             return true;
         }
 
         public void SetShippingMethodToNull()
         {
             _genericAttributeService.SaveAttribute<ShippingOption>(_workContext.CurrentCustomer,
-                SystemCustomerAttributeNames.SelectedShippingOption, null, _storeContext.CurrentStore.Id);
+                NopCustomerDefaults.SelectedShippingOptionAttribute, null, _storeContext.CurrentStore.Id);
         }
     }
 }

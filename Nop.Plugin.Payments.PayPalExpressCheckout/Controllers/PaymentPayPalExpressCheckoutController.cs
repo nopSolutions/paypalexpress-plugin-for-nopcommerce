@@ -174,9 +174,12 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             return View("~/Plugins/Payments.PayPalExpressCheckout/Views/Configure.cshtml", model);
         }
        
-        public RedirectResult SubmitButton()
+        public ActionResult SubmitButton()
         {
             var cart = _payPalExpressCheckoutService.GetCart();
+
+            if (!cart.Any())
+                return RedirectToRoute("ShoppingCart");
 
             return Redirect(_payPalRedirectionService.ProcessSubmitButton(cart, TempData));
         }

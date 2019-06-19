@@ -25,6 +25,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
             public string Fee { get; set; }
             public bool Selected { get; set; }
         }
+
         #endregion
     }
 }

@@ -43,7 +43,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         public ProcessPaymentRequest SetCheckoutDetails(GetExpressCheckoutDetailsResponseDetailsType checkoutDetails)
         {
             // get customer & cart
-            int customerId = Convert.ToInt32(_workContext.CurrentCustomer.Id.ToString());
+            var customerId = Convert.ToInt32(_workContext.CurrentCustomer.Id.ToString());
             var customer = _customerService.GetCustomerById(customerId);
 
             _workContext.CurrentCustomer = customer;
@@ -51,18 +51,18 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             var cart = customer.ShoppingCartItems.Where(sci => sci.ShoppingCartType == ShoppingCartType.ShoppingCart).ToList();
 
             // get/update billing address
-            string billingFirstName = checkoutDetails.PayerInfo.PayerName.FirstName;
-            string billingLastName = checkoutDetails.PayerInfo.PayerName.LastName;
-            string billingEmail = checkoutDetails.PayerInfo.Payer;
-            string billingAddress1 = checkoutDetails.PayerInfo.Address.Street1;
-            string billingAddress2 = checkoutDetails.PayerInfo.Address.Street2;
-            string billingPhoneNumber = checkoutDetails.PayerInfo.ContactPhone;
-            string billingCity = checkoutDetails.PayerInfo.Address.CityName;
+            var billingFirstName = checkoutDetails.PayerInfo.PayerName.FirstName;
+            var billingLastName = checkoutDetails.PayerInfo.PayerName.LastName;
+            var billingEmail = checkoutDetails.PayerInfo.Payer;
+            var billingAddress1 = checkoutDetails.PayerInfo.Address.Street1;
+            var billingAddress2 = checkoutDetails.PayerInfo.Address.Street2;
+            var billingPhoneNumber = checkoutDetails.PayerInfo.ContactPhone;
+            var billingCity = checkoutDetails.PayerInfo.Address.CityName;
             int? billingStateProvinceId = null;
             var billingStateProvince = _stateProvinceService.GetStateProvinceByAbbreviation(checkoutDetails.PayerInfo.Address.StateOrProvince);
             if (billingStateProvince != null)
                 billingStateProvinceId = billingStateProvince.Id;
-            string billingZipPostalCode = checkoutDetails.PayerInfo.Address.PostalCode;
+            var billingZipPostalCode = checkoutDetails.PayerInfo.Address.PostalCode;
             int? billingCountryId = null;
             var billingCountry = _countryService.GetCountryByTwoLetterIsoCode(checkoutDetails.PayerInfo.Address.Country.ToString());
             if (billingCountry != null)
@@ -73,26 +73,27 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 billingEmail, string.Empty, string.Empty,
                 billingAddress1, billingAddress2, billingCity,
                 billingCountry?.Name, billingStateProvinceId, billingZipPostalCode,
-                billingCountryId, null);    //TODO process custom attributes
+                billingCountryId, null); //TODO process custom attributes
 
             if (billingAddress == null)
             {
-                billingAddress = new Core.Domain.Common.Address()
-                                     {
-                                         FirstName = billingFirstName,
-                                         LastName = billingLastName,
-                                         PhoneNumber = billingPhoneNumber,
-                                         Email = billingEmail,
-                                         FaxNumber = string.Empty,
-                                         Company = string.Empty,
-                                         Address1 = billingAddress1,
-                                         Address2 = billingAddress2,
-                                         City = billingCity,
-                                         StateProvinceId = billingStateProvinceId,
-                                         ZipPostalCode = billingZipPostalCode,
-                                         CountryId = billingCountryId,
-                                         CreatedOnUtc = DateTime.UtcNow,
-                                     };
+                billingAddress = new Core.Domain.Common.Address
+                {
+                    FirstName = billingFirstName,
+                    LastName = billingLastName,
+                    PhoneNumber = billingPhoneNumber,
+                    Email = billingEmail,
+                    FaxNumber = string.Empty,
+                    Company = string.Empty,
+                    Address1 = billingAddress1,
+                    Address2 = billingAddress2,
+                    City = billingCity,
+                    StateProvinceId = billingStateProvinceId,
+                    ZipPostalCode = billingZipPostalCode,
+                    CountryId = billingCountryId,
+                    CreatedOnUtc = DateTime.UtcNow
+                };
+
                 customer.Addresses.Add(billingAddress);
             }
 
@@ -102,30 +103,27 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
             _genericAttributeService.SaveAttribute<ShippingOption>(customer, NopCustomerDefaults.SelectedShippingOptionAttribute, null, customer.RegisteredInStoreId);
 
-            bool shoppingCartRequiresShipping = _shoppingCartService.ShoppingCartRequiresShipping(cart);
+            var shoppingCartRequiresShipping = _shoppingCartService.ShoppingCartRequiresShipping(cart);
             if (shoppingCartRequiresShipping)
             {
-                var paymentDetails = checkoutDetails.PaymentDetails.FirstOrDefault();
-                string[] shippingFullname = paymentDetails.ShipToAddress.Name.Trim()
-                                                          .Split(new char[] { ' ' }, 2,
-                                                                 StringSplitOptions.RemoveEmptyEntries);
-                string shippingFirstName = shippingFullname[0];
-                string shippingLastName = string.Empty;
+                var paymentDetails = checkoutDetails.PaymentDetails.FirstOrDefault() ?? new PaymentDetailsType();
+                var shippingFullname = paymentDetails.ShipToAddress.Name.Trim()
+                    .Split(new[] { ' ' }, 2, StringSplitOptions.RemoveEmptyEntries);
+                var shippingFirstName = shippingFullname[0];
+                var shippingLastName = string.Empty;
                 if (shippingFullname.Length > 1)
                     shippingLastName = shippingFullname[1];
-                string shippingEmail = checkoutDetails.PayerInfo.Payer;
-                string shippingAddress1 = paymentDetails.ShipToAddress.Street1;
-                string shippingAddress2 = paymentDetails.ShipToAddress.Street2;
-                string shippingPhoneNumber = paymentDetails.ShipToAddress.Phone;
-                string shippingCity = paymentDetails.ShipToAddress.CityName;
+                var shippingEmail = checkoutDetails.PayerInfo.Payer;
+                var shippingAddress1 = paymentDetails.ShipToAddress.Street1;
+                var shippingAddress2 = paymentDetails.ShipToAddress.Street2;
+                var shippingPhoneNumber = paymentDetails.ShipToAddress.Phone;
+                var shippingCity = paymentDetails.ShipToAddress.CityName;
                 int? shippingStateProvinceId = null;
-                var shippingStateProvince =
-                    _stateProvinceService.GetStateProvinceByAbbreviation(
-                        paymentDetails.ShipToAddress.StateOrProvince);
+                var shippingStateProvince = _stateProvinceService.GetStateProvinceByAbbreviation(paymentDetails.ShipToAddress.StateOrProvince);
                 if (shippingStateProvince != null)
                     shippingStateProvinceId = shippingStateProvince.Id;
                 int? shippingCountryId = null;
-                string shippingZipPostalCode = paymentDetails.ShipToAddress.PostalCode;
+                var shippingZipPostalCode = paymentDetails.ShipToAddress.PostalCode;
                 var shippingCountry =
                     _countryService.GetCountryByTwoLetterIsoCode(paymentDetails.ShipToAddress.Country.ToString());
                 if (shippingCountry != null)
@@ -136,27 +134,27 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                     shippingEmail, string.Empty, string.Empty,
                     shippingAddress1, shippingAddress2, shippingCity,
                     shippingCountry?.Name, shippingStateProvinceId, shippingZipPostalCode,
-                    shippingCountryId, null);    //TODO process custom attributes
-
+                    shippingCountryId, null); //TODO process custom attributes
 
                 if (shippingAddress == null)
                 {
-                    shippingAddress = new Core.Domain.Common.Address()
-                                          {
-                                              FirstName = shippingFirstName,
-                                              LastName = shippingLastName,
-                                              PhoneNumber = shippingPhoneNumber,
-                                              Email = shippingEmail,
-                                              FaxNumber = string.Empty,
-                                              Company = string.Empty,
-                                              Address1 = shippingAddress1,
-                                              Address2 = shippingAddress2,
-                                              City = shippingCity,
-                                              StateProvinceId = shippingStateProvinceId,
-                                              ZipPostalCode = shippingZipPostalCode,
-                                              CountryId = shippingCountryId,
-                                              CreatedOnUtc = DateTime.UtcNow,
-                                          };
+                    shippingAddress = new Core.Domain.Common.Address
+                    {
+                        FirstName = shippingFirstName,
+                        LastName = shippingLastName,
+                        PhoneNumber = shippingPhoneNumber,
+                        Email = shippingEmail,
+                        FaxNumber = string.Empty,
+                        Company = string.Empty,
+                        Address1 = shippingAddress1,
+                        Address2 = shippingAddress2,
+                        City = shippingCity,
+                        StateProvinceId = shippingStateProvinceId,
+                        ZipPostalCode = shippingZipPostalCode,
+                        CountryId = shippingCountryId,
+                        CreatedOnUtc = DateTime.UtcNow
+                    };
+
                     customer.Addresses.Add(shippingAddress);
                 }
 
@@ -165,11 +163,17 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 _customerService.UpdateCustomer(customer);
             }
 
-            var processPaymentRequest = new ProcessPaymentRequest { CustomerId = customerId };
-            processPaymentRequest.CustomValues["PaypalToken"] = checkoutDetails.Token;
-            processPaymentRequest.CustomValues["PaypalPayerId"] = checkoutDetails.PayerInfo.PayerID;
+            var processPaymentRequest = new ProcessPaymentRequest
+            {
+                CustomerId = customerId,
+                CustomValues =
+                {
+                    ["PaypalToken"] = checkoutDetails.Token,
+                    ["PaypalPayerId"] = checkoutDetails.PayerInfo.PayerID
+                }
+            };
+
             return processPaymentRequest;
         }
-
     }
 }

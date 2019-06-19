@@ -20,7 +20,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
         /// <summary>
         /// Get nopCommerce partner code
         /// </summary>
-        public static string BnCode { get { return "nopCommerce_SP"; } }
+        public static string BnCode => "nopCommerce_SP";
 
         #endregion
 
@@ -36,6 +36,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
                 onFailure(result, response);
 
             LogResponse(response, orderGuid);
+
             return result;
         }
 
@@ -47,6 +48,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
             LogOrderNotesInternal(response, orderGuid, chunks);
             LogDebugMessages(response, chunks);
         }
+
         public static void LogOrderNotes<T>(this T response, Guid orderGuid)
              where T : AbstractResponseType
         {
@@ -59,47 +61,49 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
         {
             var orderService = EngineContext.Current.Resolve<IOrderService>();
             var order = orderService.GetOrderByGuid(orderGuid);
-            for (int index = 0; index < chunks.Count; index++)
+            for (var index = 0; index < chunks.Count; index++)
             {
                 var chunk = chunks[index];
                 var message = new string(chunk.ToArray());
                 var intro = $"{response.GetType().Name} returned - Part {index + 1} of {chunks.Count}";
 
-                if (order != null)
-                {
-                    order.OrderNotes.Add(new OrderNote
-                    {
-                        Order = order,
-                        DisplayToCustomer = false,
-                        Note = intro + " - " + message,
-                        CreatedOnUtc = DateTime.UtcNow
-                    });
+                if (order == null) 
+                    continue;
 
-                    orderService.UpdateOrder(order);
-                }
+                order.OrderNotes.Add(new OrderNote
+                {
+                    Order = order,
+                    DisplayToCustomer = false,
+                    Note = intro + " - " + message,
+                    CreatedOnUtc = DateTime.UtcNow
+                });
+
+                orderService.UpdateOrder(order);
             }
         }
+
         private static void LogDebugMessages<T>(T response, List<IEnumerable<char>> chunks) where T : AbstractResponseType
         {
-            for (int index = 0; index < chunks.Count; index++)
+            for (var index = 0; index < chunks.Count; index++)
             {
                 var chunk = chunks[index];
                 var message = new string(chunk.ToArray());
                 var intro = $"{response.GetType().Name} returned - Part {index + 1} of {chunks.Count}";
 
-                if (EngineContext.Current.Resolve<PayPalExpressCheckoutPaymentSettings>().EnableDebugLogging)
-                {
-                    var logger = EngineContext.Current.Resolve<ILogger>();
+                if (!EngineContext.Current.Resolve<PayPalExpressCheckoutPaymentSettings>().EnableDebugLogging) 
+                    continue;
 
-                    logger.InsertLog(LogLevel.Debug, intro, message);
-                }
+                var logger = EngineContext.Current.Resolve<ILogger>();
+
+                logger.InsertLog(LogLevel.Debug, intro, message);
             }
         }
 
         private static List<IEnumerable<char>> GetMessage<T>(T response) where T : AbstractResponseType
         {
             var fullMessage = JsonConvert.SerializeObject(response);
-            var chunks = fullMessage.Chunk(3500).ToList();
+            var chunks = fullMessage.ToList().Chunk(3500).ToList();
+
             return chunks;
         }
 
@@ -125,7 +129,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
         /// <summary>
         /// Break a list of items into chunks of a specific size
         /// </summary>
-        public static IEnumerable<IEnumerable<T>> Chunk<T>(this IEnumerable<T> source, int chunksize)
+        public static IEnumerable<IEnumerable<T>> Chunk<T>(this IList<T> source, int chunksize)
         {
             while (source.Any())
             {

@@ -5,13 +5,13 @@ using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Core.Http.Extensions;
-using Nop.Core.Plugins;
+using Nop.Plugin.Payments.PayPalExpressCheckout.Helpers;
 using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Services;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Payments;
-using Nop.Plugin.Payments.PayPalExpressCheckout.Helpers;
+using Nop.Services.Plugins;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout
 {
@@ -43,7 +43,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
             PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings,
             IWebHelper webHelper)
         {
-            _session = httpContextAccessor.HttpContext.Session;
+            _session = httpContextAccessor.HttpContext?.Session;
             _localizationService = localizationService;
             _paymentService = paymentService;
             _payPalInterfaceService = payPalInterfaceService;
@@ -84,11 +84,12 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
                     paymentResult.AuthorizationTransactionId =
                     processPaymentRequest.CustomValues["PaypalToken"].ToString();
                     var paymentInfoType = type.DoExpressCheckoutPaymentResponseDetails.PaymentInfo.FirstOrDefault();
+                    
                     if (paymentInfoType != null)
                     {
                         paymentResult.CaptureTransactionId = paymentInfoType.TransactionID;
-
                     }
+
                     paymentResult.CaptureTransactionResult = type.Ack.ToString();
                 },
                 (paymentResult, type) =>
@@ -146,18 +147,18 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
                 var response = payPalApiaaInterfaceClient.DoCapture(ref customSecurityHeaderType, doCaptureReq);
 
                 return response.HandleResponse(new CapturePaymentResult
-                                                   {
-                                                       CaptureTransactionId =
-                                                           capturePaymentRequest.Order.CaptureTransactionId
-                                                   },
-                                               (paymentResult, type) =>
-                                               {
-                                                   paymentResult.NewPaymentStatus = PaymentStatus.Paid;
-                                                   paymentResult.CaptureTransactionResult = response.Ack.ToString();
-                                               },
-                                               (paymentResult, type) =>
-                                               response.Errors.AddErrors(paymentResult.AddError),
-                                               capturePaymentRequest.Order.OrderGuid);
+                    {
+                        CaptureTransactionId =
+                            capturePaymentRequest.Order.CaptureTransactionId
+                    },
+                    (paymentResult, type) =>
+                    {
+                        paymentResult.NewPaymentStatus = PaymentStatus.Paid;
+                        paymentResult.CaptureTransactionResult = response.Ack.ToString();
+                    },
+                    (paymentResult, type) =>
+                        response.Errors.AddErrors(paymentResult.AddError),
+                    capturePaymentRequest.Order.OrderGuid);
             }
         }
 
@@ -172,16 +173,16 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
             using (var payPalApiInterfaceClient = _payPalInterfaceService.GetService())
             {
                 var response = payPalApiInterfaceClient.RefundTransaction(ref customSecurityHeaderType,
-                                                                          _payPalRequestService.GetRefundTransactionRequest(refundPaymentRequest));
+                    _payPalRequestService.GetRefundTransactionRequest(refundPaymentRequest));
 
                 return response.HandleResponse(new RefundPaymentResult(),
-                                               (paymentResult, type) =>
-                                               paymentResult.NewPaymentStatus = refundPaymentRequest.IsPartialRefund
-                                                                                    ? PaymentStatus.PartiallyRefunded
-                                                                                    : PaymentStatus.Refunded,
-                                               (paymentResult, type) =>
-                                               response.Errors.AddErrors(paymentResult.AddError),
-                                               refundPaymentRequest.Order.OrderGuid);
+                    (paymentResult, type) =>
+                        paymentResult.NewPaymentStatus = refundPaymentRequest.IsPartialRefund
+                            ? PaymentStatus.PartiallyRefunded
+                            : PaymentStatus.Refunded,
+                    (paymentResult, type) =>
+                        response.Errors.AddErrors(paymentResult.AddError),
+                    refundPaymentRequest.Order.OrderGuid);
             }
         }
 
@@ -196,14 +197,15 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
 
             using (var payPalApiaaInterfaceClient = _payPalInterfaceService.GetAAService())
             {
-                var response = payPalApiaaInterfaceClient.DoVoid(ref customSecurityHeaderType, _payPalRequestService.GetVoidRequest(voidPaymentRequest));
+                var response = payPalApiaaInterfaceClient.DoVoid(ref customSecurityHeaderType,
+                    _payPalRequestService.GetVoidRequest(voidPaymentRequest));
 
                 return response.HandleResponse(new VoidPaymentResult(),
-                                               (paymentResult, type) =>
-                                               paymentResult.NewPaymentStatus = PaymentStatus.Voided,
-                                               (paymentResult, type) =>
-                                               response.Errors.AddErrors(paymentResult.AddError),
-                                               voidPaymentRequest.Order.OrderGuid);
+                    (paymentResult, type) =>
+                        paymentResult.NewPaymentStatus = PaymentStatus.Voided,
+                    (paymentResult, type) =>
+                        response.Errors.AddErrors(paymentResult.AddError),
+                    voidPaymentRequest.Order.OrderGuid);
             }
         }
 
@@ -219,17 +221,14 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
                 var customSecurityHeaderType = _payPalSecurityService.GetRequesterCredentials();
                 CreateRecurringPaymentsProfileResponseType response =
                     payPalApiaaInterfaceClient.CreateRecurringPaymentsProfile(ref customSecurityHeaderType,
-                                                                              _payPalRequestService
-                                                                                  .GetCreateRecurringPaymentsProfileRequest
-                                                                                  (processPaymentRequest));
+                        _payPalRequestService.GetCreateRecurringPaymentsProfileRequest(processPaymentRequest));
 
                 return response.HandleResponse(new ProcessPaymentResult(),
-                                               (paymentResult, type) => paymentResult.NewPaymentStatus = PaymentStatus.Pending,
-                                               (paymentResult, type) => response.Errors.AddErrors(paymentResult.AddError),
-                                               processPaymentRequest.OrderGuid);
+                    (paymentResult, type) => paymentResult.NewPaymentStatus = PaymentStatus.Pending,
+                    (paymentResult, type) => response.Errors.AddErrors(paymentResult.AddError),
+                    processPaymentRequest.OrderGuid);
             }
         }
-
 
         /// <summary>
         /// Cancels a recurring payment
@@ -241,15 +240,14 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
             var customSecurityHeaderType = _payPalSecurityService.GetRequesterCredentials();
             using (var payPalApiaaInterfaceClient = _payPalInterfaceService.GetAAService())
             {
-
                 var response =
                     payPalApiaaInterfaceClient.ManageRecurringPaymentsProfileStatus(ref customSecurityHeaderType,
-                                                                                    _payPalRequestService.GetCancelRecurringPaymentRequest(cancelPaymentRequest));
+                        _payPalRequestService.GetCancelRecurringPaymentRequest(cancelPaymentRequest));
 
                 return response.HandleResponse(new CancelRecurringPaymentResult(),
-                                               (paymentResult, type) => { },
-                                               (paymentResult, type) => response.Errors.AddErrors(paymentResult.AddError),
-                                               cancelPaymentRequest.Order.OrderGuid);
+                    (paymentResult, type) => { },
+                    (paymentResult, type) => response.Errors.AddErrors(paymentResult.AddError),
+                    cancelPaymentRequest.Order.OrderGuid);
             }
         }
 
@@ -374,68 +372,42 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
         /// <summary>
         /// Gets a value indicating whether capture is supported
         /// </summary>
-        public bool SupportCapture
-        {
-            get { return true; }
-        }
+        public bool SupportCapture => true;
 
         /// <summary>
         /// Gets a value indicating whether partial refund is supported
         /// </summary>
-        public bool SupportPartiallyRefund
-        {
-            get { return true; }
-        }
+        public bool SupportPartiallyRefund => true;
 
         /// <summary>
         /// Gets a value indicating whether refund is supported
         /// </summary>
-        public bool SupportRefund
-        {
-            get { return true; }
-        }
+        public bool SupportRefund => true;
 
         /// <summary>
         /// Gets a value indicating whether void is supported
         /// </summary>
-        public bool SupportVoid
-        {
-            get { return true; }
-        }
+        public bool SupportVoid => true;
 
         /// <summary>
         /// Gets a recurring payment type of payment method
         /// </summary>
-        public RecurringPaymentType RecurringPaymentType
-        {
-            get { return RecurringPaymentType.NotSupported; }
-        }
+        public RecurringPaymentType RecurringPaymentType => RecurringPaymentType.NotSupported;
 
         /// <summary>
         /// Gets a payment method type
         /// </summary>
-        public PaymentMethodType PaymentMethodType
-        {
-            get { return PaymentMethodType.Button; }
-        }
+        public PaymentMethodType PaymentMethodType => PaymentMethodType.Button;
 
         /// <summary>
         /// Gets a value indicating whether we should display a payment information page for this plugin
         /// </summary>
-        public bool SkipPaymentInfo
-        {
-            get { return false; }
-        }
+        public bool SkipPaymentInfo => false;
 
         /// <summary>
         /// Gets a payment method description that will be displayed on checkout pages in the public store
         /// </summary>
-        public string PaymentMethodDescription
-        {
-            //return description of this payment method to be display on "payment method" checkout step. good practice is to make it localizable
-            //for example, for a redirection payment method, description may be like this: "You will be redirected to PayPal site to complete the payment"
-            get { return _localizationService.GetResource("Plugins.Payments.PayPalExpressCheckout.PaymentMethodDescription"); }
-        }
+        public string PaymentMethodDescription => _localizationService.GetResource("Plugins.Payments.PayPalExpressCheckout.PaymentMethodDescription");
 
         #endregion
     }

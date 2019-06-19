@@ -6,10 +6,10 @@
 {
     <p class="error">@error</p>
 }
-<script type="text/javascript">
+    <script asp-location="Footer">
     $(document).ready(function () {
         $('#payPalExpressCheckoutImage').click(function () {
             setLocation('@Url.RouteUrl("Plugin.Payments.PayPalExpressCheckout.SubmitButton")');
         });
     });
-</script>
+    </script>

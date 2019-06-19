@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
+using Nop.Plugin.Payments.PayPalExpressCheckout.Helpers;
 using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
 using Nop.Services.Payments;
-using Nop.Plugin.Payments.PayPalExpressCheckout.Helpers;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
@@ -19,12 +18,12 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         private readonly IWorkContext _workContext;
 
         public PayPalRequestService(IPayPalUrlService payPalUrlService,
-                                   IPayPalShippingService payPalShippingService,
-                                   PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings,
-                                   IPayPalOrderService payPalOrderService,
-                                   IPayPalCurrencyCodeParser payPalCurrencyCodeParser,
-                                   IPayPalRecurringPaymentsService payPalRecurringPaymentsService,
-                                   IWorkContext workContext)
+            IPayPalShippingService payPalShippingService,
+            PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings,
+            IPayPalOrderService payPalOrderService,
+            IPayPalCurrencyCodeParser payPalCurrencyCodeParser,
+            IPayPalRecurringPaymentsService payPalRecurringPaymentsService,
+            IWorkContext workContext)
         {
             _payPalUrlService = payPalUrlService;
             _payPalShippingService = payPalShippingService;
@@ -39,18 +38,18 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         {
             var setExpressCheckoutRequestDetailsType =
                 new SetExpressCheckoutRequestDetailsType
-                    {
-                        ReturnURL = _payPalUrlService.GetReturnURL(),
-                        CancelURL = _payPalUrlService.GetCancelURL(),
-                        ReqConfirmShipping = _payPalShippingService.GetRequireConfirmedShippingAddress(cart),
-                        NoShipping = _payPalShippingService.GetNoShipping(cart),
-                        LocaleCode = _payPalExpressCheckoutPaymentSettings.LocaleCode,
-                        cppheaderimage = _payPalExpressCheckoutPaymentSettings.LogoImageURL,
-                        cppcartbordercolor = _payPalExpressCheckoutPaymentSettings.CartBorderColor,
-                        PaymentDetails = _payPalOrderService.GetPaymentDetails(cart),
-                        BuyerEmail = _payPalOrderService.GetBuyerEmail(),
-                        MaxAmount = _payPalOrderService.GetMaxAmount(cart)
-                    };
+                {
+                    ReturnURL = _payPalUrlService.GetReturnURL(),
+                    CancelURL = _payPalUrlService.GetCancelURL(),
+                    ReqConfirmShipping = _payPalShippingService.GetRequireConfirmedShippingAddress(cart),
+                    NoShipping = _payPalShippingService.GetNoShipping(cart),
+                    LocaleCode = _payPalExpressCheckoutPaymentSettings.LocaleCode,
+                    cppheaderimage = _payPalExpressCheckoutPaymentSettings.LogoImageURL,
+                    cppcartbordercolor = _payPalExpressCheckoutPaymentSettings.CartBorderColor,
+                    PaymentDetails = _payPalOrderService.GetPaymentDetails(cart),
+                    BuyerEmail = _payPalOrderService.GetBuyerEmail(),
+                    MaxAmount = _payPalOrderService.GetMaxAmount(cart)
+                };
 
             return setExpressCheckoutRequestDetailsType;
         }
@@ -63,6 +62,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 SetExpressCheckoutRequestDetails = setExpressCheckoutRequestDetailsType,
                 Version = GetVersion()
             };
+
             return new SetExpressCheckoutReq { SetExpressCheckoutRequest = setExpressCheckoutRequestType };
         }
 
@@ -74,14 +74,13 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         public GetExpressCheckoutDetailsReq GetGetExpressCheckoutDetailsRequest(string token)
         {
             return new GetExpressCheckoutDetailsReq
-                       {
-                           GetExpressCheckoutDetailsRequest =
-                               new GetExpressCheckoutDetailsRequestType
-                                   {
-                                       Token = token,
-                                       Version = GetVersion()
-                                   }
-                       };
+            {
+                GetExpressCheckoutDetailsRequest = new GetExpressCheckoutDetailsRequestType
+                {
+                    Token = token,
+                    Version = GetVersion()
+                }
+            };
         }
 
         public DoExpressCheckoutPaymentReq GetDoExpressCheckoutPaymentRequest(ProcessPaymentRequest processPaymentRequest)
@@ -117,20 +116,20 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
         public DoCaptureReq GetDoCaptureRequest(CapturePaymentRequest capturePaymentRequest)
         {
-            var currencyCodeType = _payPalCurrencyCodeParser.GetCurrencyCodeType(capturePaymentRequest.Order.CustomerCurrencyCode);
+            var currencyCodeType =
+                _payPalCurrencyCodeParser.GetCurrencyCodeType(capturePaymentRequest.Order.CustomerCurrencyCode);
             return new DoCaptureReq
-                       {
-                           DoCaptureRequest = new DoCaptureRequestType
-                                                  {
-                                                      Amount = capturePaymentRequest.Order.OrderTotal.GetBasicAmountType(currencyCodeType),
-                                                      AuthorizationID = capturePaymentRequest.Order.CaptureTransactionId,
-                                                      CompleteType = CompleteCodeType.Complete,
-                                                      InvoiceID = capturePaymentRequest.Order.OrderGuid.ToString(),
-                                                      Version = GetVersion(),
-                                                      MsgSubID = capturePaymentRequest.Order.Id + "-capture"
-                                                  },
-
-                       };
+            {
+                DoCaptureRequest = new DoCaptureRequestType
+                {
+                    Amount = capturePaymentRequest.Order.OrderTotal.GetBasicAmountType(currencyCodeType),
+                    AuthorizationID = capturePaymentRequest.Order.CaptureTransactionId,
+                    CompleteType = CompleteCodeType.Complete,
+                    InvoiceID = capturePaymentRequest.Order.OrderGuid.ToString(),
+                    Version = GetVersion(),
+                    MsgSubID = capturePaymentRequest.Order.Id + "-capture"
+                }
+            };
         }
 
         public RefundTransactionReq GetRefundTransactionRequest(RefundPaymentRequest refundPaymentRequest)
@@ -148,15 +147,15 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                     Version = GetVersion(),
                     TransactionID = transactionId,
                     Amount = refundPaymentRequest.AmountToRefund.GetBasicAmountType(currencyCodeType),
-                    MsgSubID = string.Format("{0}-{1}-{2:0.00}", refundPaymentRequest.Order.Id, refundPaymentRequest.IsPartialRefund, refundPaymentRequest.AmountToRefund)
+                    MsgSubID = $"{refundPaymentRequest.Order.Id}-{refundPaymentRequest.IsPartialRefund}-{refundPaymentRequest.AmountToRefund:0.00}"
                 }
             };
         }
 
         public DoVoidReq GetVoidRequest(VoidPaymentRequest voidPaymentRequest)
         {
-            string transactionId = voidPaymentRequest.Order.CaptureTransactionId;
-            if (String.IsNullOrEmpty(transactionId))
+            var transactionId = voidPaymentRequest.Order.CaptureTransactionId;
+            if (string.IsNullOrEmpty(transactionId))
                 transactionId = voidPaymentRequest.Order.AuthorizationTransactionId;
 
             return new DoVoidReq
@@ -170,18 +169,17 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             };
         }
 
-        public CreateRecurringPaymentsProfileReq GetCreateRecurringPaymentsProfileRequest(ProcessPaymentRequest processPaymentRequest)
+        public CreateRecurringPaymentsProfileReq GetCreateRecurringPaymentsProfileRequest(
+            ProcessPaymentRequest processPaymentRequest)
         {
             var req = new CreateRecurringPaymentsProfileReq
             {
-                CreateRecurringPaymentsProfileRequest =
-                    new CreateRecurringPaymentsProfileRequestType
-                    {
-                        Version = GetVersion(),
-                        CreateRecurringPaymentsProfileRequestDetails = _payPalRecurringPaymentsService.GetCreateRecurringPaymentProfileRequestDetails(processPaymentRequest)
-                    }
+                CreateRecurringPaymentsProfileRequest = new CreateRecurringPaymentsProfileRequestType
+                {
+                    Version = GetVersion(),
+                    CreateRecurringPaymentsProfileRequestDetails = _payPalRecurringPaymentsService.GetCreateRecurringPaymentProfileRequestDetails(processPaymentRequest)
+                }
             };
-
 
             return req;
         }
@@ -190,21 +188,17 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             CancelRecurringPaymentRequest cancelRecurringPaymentRequest)
         {
             return new ManageRecurringPaymentsProfileStatusReq
-                       {
-                           ManageRecurringPaymentsProfileStatusRequest =
-                               new ManageRecurringPaymentsProfileStatusRequestType
-                                   {
-                                       Version = GetVersion(),
-                                       ManageRecurringPaymentsProfileStatusRequestDetails =
-                                           new ManageRecurringPaymentsProfileStatusRequestDetailsType
-                                               {
-                                                   Action = StatusChangeActionType.Cancel,
-                                                   ProfileID = cancelRecurringPaymentRequest.Order.OrderGuid.ToString()
-
-                                               },
-
-                                   }
-                       };
+            {
+                ManageRecurringPaymentsProfileStatusRequest = new ManageRecurringPaymentsProfileStatusRequestType
+                {
+                    Version = GetVersion(),
+                    ManageRecurringPaymentsProfileStatusRequestDetails = new ManageRecurringPaymentsProfileStatusRequestDetailsType
+                    {
+                        Action = StatusChangeActionType.Cancel,
+                        ProfileID = cancelRecurringPaymentRequest.Order.OrderGuid.ToString()
+                    }
+                }
+            };
         }
     }
 }

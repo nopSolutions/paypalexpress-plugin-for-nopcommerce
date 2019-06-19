@@ -54,6 +54,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 return true;
 
             var interval = DateTime.UtcNow - lastOrder.CreatedOnUtc;
+            
             return interval.TotalSeconds > _orderSettings.MinimumOrderPlacementInterval;
         }
 
@@ -72,35 +73,35 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         {
             var localeOptions = new Dictionary<string, string>
             {
-                {"AU", "Australia"},
-                {"AI", "Austria"},
-                {"BE", "Belgium"},
-                {"BR", "Brazil"},
-                {"CA", "Canada"},
-                {"CH", "Switzerland"},
-                {"CN", "China"},
-                {"DE", "Germany"},
-                {"ES", "Spain"},
-                {"GB", "United Kingdom"},
-                {"FR", "France"},
-                {"IT", "Italy"},
-                {"NL", "Netherlands"},
-                {"PL", "Poland"},
-                {"PT", "Portugal"},
-                {"RU", "Russia"},
-                {"da_DK", "Danish (for Denmark only)"},
-                {"he_IL", "Hebrew (all)"},
-                {"id_ID", "Indonesian (for Indonesia only)"},
-                {"jp_JP", "Japanese (for Japan only)"},
-                {"no_NO", "Norweigan (for Norway only)"},
-                {"pt_BR", "Portuguese (for Portugal and Brazil only)"},
-                {"ru_RU", "Russian (for Lithuania, Latvia, and Ukraine only)"},
-                {"sv_SE", "Swedish (for Sweden only)"},
-                {"th_TH", "Thai (for Thailand only)"},
-                {"tr_TR", "Turkish (for Turkey only)"},
-                {"zh_CN", "Simplified Chinese (for China only)"},
-                {"zh_HK", "Traditional Chinese (for Hong Kong only)"},
-                {"zh_TW", "Traditional Chinese (for Taiwan only)"},
+                { "AU", "Australia" },
+                { "AI", "Austria" },
+                { "BE", "Belgium" },
+                { "BR", "Brazil" },
+                { "CA", "Canada" },
+                { "CH", "Switzerland" },
+                { "CN", "China" },
+                { "DE", "Germany" },
+                { "ES", "Spain" },
+                { "GB", "United Kingdom" },
+                { "FR", "France" },
+                { "IT", "Italy" },
+                { "NL", "Netherlands" },
+                { "PL", "Poland" },
+                { "PT", "Portugal" },
+                { "RU", "Russia" },
+                { "da_DK", "Danish (for Denmark only)" },
+                { "he_IL", "Hebrew (all)" },
+                { "id_ID", "Indonesian (for Indonesia only)" },
+                { "jp_JP", "Japanese (for Japan only)" },
+                { "no_NO", "Norweigan (for Norway only)" },
+                { "pt_BR", "Portuguese (for Portugal and Brazil only)" },
+                { "ru_RU", "Russian (for Lithuania, Latvia, and Ukraine only)" },
+                { "sv_SE", "Swedish (for Sweden only)" },
+                { "th_TH", "Thai (for Thailand only)" },
+                { "tr_TR", "Turkish (for Turkey only)" },
+                { "zh_CN", "Simplified Chinese (for China only)" },
+                { "zh_HK", "Traditional Chinese (for Hong Kong only)" },
+                { "zh_TW", "Traditional Chinese (for Taiwan only)" }
             }.Select(type => new SelectListItem
             {
                 Selected = type.Key == localeCode,
@@ -113,6 +114,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 Value = "US",
                 Selected = localeCode == null || localeCode == "US"
             });
+
             return localeOptions;
         }
     }

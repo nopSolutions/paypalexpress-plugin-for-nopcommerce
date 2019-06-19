@@ -44,9 +44,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
                  new { controller = "PaymentPayPalExpressCheckout", action = "IPNHandler" });
         }
 
-        public int Priority
-        {
-            get { return 0; }
-        }
+        public int Priority => 0;
     }
 }

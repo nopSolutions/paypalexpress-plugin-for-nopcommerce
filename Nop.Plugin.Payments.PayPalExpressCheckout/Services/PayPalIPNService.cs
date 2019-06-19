@@ -27,229 +27,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             _logger = logger;
         }
 
-        public void HandleIPN(string ipnData)
-        {
-            if (VerifyIPN(ipnData, out Dictionary<string, string> values))
-            {
-                
-                var total = decimal.Zero;
-                try
-                {
-                    total = decimal.Parse(values["mc_gross"], new CultureInfo("en-US"));
-                }
-                catch { }
-
-                values.TryGetValue("payer_status", out string _);
-                values.TryGetValue("payment_status", out string paymentStatus);
-                values.TryGetValue("pending_reason", out string pendingReason);
-                values.TryGetValue("mc_currency", out string _);
-                values.TryGetValue("txn_id", out string _);
-                values.TryGetValue("txn_type", out string txnType);
-                values.TryGetValue("rp_invoice_id", out string rpInvoiceID);
-                values.TryGetValue("payment_type", out string _);
-                values.TryGetValue("payer_id", out string _);
-                values.TryGetValue("receiver_id", out string _);
-                values.TryGetValue("invoice", out string _);
-                values.TryGetValue("payment_fee", out string _);
-
-
-                var sb = new StringBuilder();
-                sb.AppendLine("Paypal IPN:");
-                foreach (var kvp in values)
-                {
-                    sb.AppendLine(kvp.Key + ": " + kvp.Value);
-                }
-
-                var newPaymentStatus = GetPaymentStatus(paymentStatus, pendingReason);
-                sb.AppendLine("New payment status: " + newPaymentStatus);
-
-                switch (txnType)
-                {
-                    case "recurring_payment_profile_created":
-                        //do nothing here
-                        break;
-                    case "recurring_payment":
-                        {
-                            var orderNumberGuid = Guid.Empty;
-                            try
-                            {
-                                orderNumberGuid = new Guid(rpInvoiceID);
-                            }
-                            catch
-                            {
-                            }
-
-                            var initialOrder = _orderService.GetOrderByGuid(orderNumberGuid);
-                            if (initialOrder != null)
-                            {
-                                var recurringPayments = _orderService.SearchRecurringPayments(0, 0, initialOrder.Id, null, 0, int.MaxValue);
-                                foreach (var rp in recurringPayments)
-                                {
-                                    switch (newPaymentStatus)
-                                    {
-                                        case PaymentStatus.Authorized:
-                                        case PaymentStatus.Paid:
-                                            {
-                                                var recurringPaymentHistory = rp.RecurringPaymentHistory;
-                                                if (recurringPaymentHistory.Count == 0)
-                                                {
-                                                    //first payment
-                                                    var rph = new RecurringPaymentHistory()
-                                                    {
-                                                        RecurringPaymentId = rp.Id,
-                                                        OrderId = initialOrder.Id,
-                                                        CreatedOnUtc = DateTime.UtcNow
-                                                    };
-                                                    rp.RecurringPaymentHistory.Add(rph);
-                                                    _orderService.UpdateRecurringPayment(rp);
-                                                }
-                                                else
-                                                {
-                                                    //next payments
-                                                    _orderProcessingService.ProcessNextRecurringPayment(rp);
-                                                }
-                                            }
-                                            break;
-                                    }
-                                }
-
-                                //this.OrderService.InsertOrderNote(newOrder.OrderId, sb.ToString(), DateTime.UtcNow);
-                                _logger.Information("PayPal IPN. Recurring info", new NopException(sb.ToString()));
-                            }
-                            else
-                            {
-                                _logger.Error("PayPal IPN. Order is not found", new NopException(sb.ToString()));
-                            }
-                        }
-                        break;
-                    default:
-                        {
-                            values.TryGetValue("custom", out string orderNumber);
-                            var orderNumberGuid = Guid.Empty;
-                            try
-                            {
-                                orderNumberGuid = new Guid(orderNumber);
-                            }
-                            catch
-                            {
-                            }
-
-                            var order = _orderService.GetOrderByGuid(orderNumberGuid);
-                            if (order != null)
-                            {
-
-                                //order note
-                                order.OrderNotes.Add(new OrderNote
-                                {
-                                    Note = sb.ToString(),
-                                    DisplayToCustomer = false,
-                                    CreatedOnUtc = DateTime.UtcNow
-                                });
-                                _orderService.UpdateOrder(order);
-
-                                switch (newPaymentStatus)
-                                {
-                                    case PaymentStatus.Pending:
-                                        {
-                                        }
-                                        break;
-                                    case PaymentStatus.Authorized:
-                                        {
-                                            if (_orderProcessingService.CanMarkOrderAsAuthorized(order))
-                                            {
-                                                _orderProcessingService.MarkAsAuthorized(order);
-                                            }
-                                        }
-                                        break;
-                                    case PaymentStatus.Paid:
-                                        {
-                                            if (_orderProcessingService.CanMarkOrderAsPaid(order))
-                                            {
-                                                _orderProcessingService.MarkOrderAsPaid(order);
-                                            }
-                                        }
-                                        break;
-                                    case PaymentStatus.Refunded:
-                                        {
-                                            if (_orderProcessingService.CanRefundOffline(order))
-                                            {
-                                                _orderProcessingService.RefundOffline(order);
-                                            }
-                                        }
-                                        break;
-                                    case PaymentStatus.Voided:
-                                        {
-                                            if (_orderProcessingService.CanVoidOffline(order))
-                                            {
-                                                _orderProcessingService.VoidOffline(order);
-                                            }
-                                        }
-                                        break;
-                                    default:
-                                        break;
-                                }
-                            }
-                            else
-                            {
-                                _logger.Error("PayPal IPN. Order is not found", new NopException(sb.ToString()));
-                            }
-                        }
-                        break;
-                }
-            }
-            else
-            {
-                _logger.Error("PayPal IPN failed.", new NopException(ipnData));
-            }
-        }
-        /// <summary>
-        /// Verifies IPN
-        /// </summary>
-        /// <param name="ipnData">IPN data</param>
-        /// <param name="values">Values</param>
-        /// <returns>Result</returns>
-        public bool VerifyIPN(string ipnData, out Dictionary<string, string> values)
-        {
-            var req = (HttpWebRequest)WebRequest.Create(GetPaypalUrl());
-            req.Method = "POST";
-            req.ContentType = "application/x-www-form-urlencoded";
-
-            var formContent = $"{ipnData}&cmd=_notify-validate";
-            req.ContentLength = formContent.Length;
-
-            using (var sw = new StreamWriter(req.GetRequestStream(), Encoding.ASCII))
-            {
-                sw.Write(formContent);
-            }
-
-            string response;
-            using (var sr = new StreamReader(req.GetResponse().GetResponseStream()))
-            {
-                response = WebUtility.UrlDecode(sr.ReadToEnd());
-            }
-            var success = response.Trim().Equals("VERIFIED", StringComparison.OrdinalIgnoreCase);
-
-            values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var l in ipnData.Split('&'))
-            {
-                var line = l.Trim();
-                var equalPox = line.IndexOf('=');
-                if (equalPox >= 0)
-                    values.Add(line.Substring(0, equalPox), line.Substring(equalPox + 1));
-            }
-
-            return success;
-        }
-        /// <summary>
-        /// Gets Paypal URL
-        /// </summary>
-        /// <returns></returns>
-        private string GetPaypalUrl()
-        {
-            return _payPalExpressCheckoutPaymentSettings.IsLive ? "https://www.paypal.com/us/cgi-bin/webscr" :
-                       "https://www.sandbox.paypal.com/us/cgi-bin/webscr";
-        }
-        /// <summary>
+         /// <summary>
         /// Gets a payment status
         /// </summary>
         /// <param name="paymentStatus">PayPal payment status</param>
@@ -277,6 +55,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                             result = PaymentStatus.Pending;
                             break;
                     }
+
                     break;
                 case "processed":
                 case "completed":
@@ -296,7 +75,209 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 default:
                     break;
             }
+
             return result;
+        }
+
+        /// <summary>
+        /// Gets Paypal URL
+        /// </summary>
+        /// <returns></returns>
+        private string GetPaypalUrl()
+        {
+            return _payPalExpressCheckoutPaymentSettings.IsLive ? "https://www.paypal.com/us/cgi-bin/webscr" :
+                       "https://www.sandbox.paypal.com/us/cgi-bin/webscr";
+        }
+
+        public void HandleIPN(string ipnData)
+        {
+            if (VerifyIPN(ipnData, out var values))
+            {
+                values.TryGetValue("payer_status", out _);
+                values.TryGetValue("payment_status", out var paymentStatus);
+                values.TryGetValue("pending_reason", out var pendingReason);
+                values.TryGetValue("mc_currency", out _);
+                values.TryGetValue("txn_id", out _);
+                values.TryGetValue("txn_type", out var txnType);
+                values.TryGetValue("rp_invoice_id", out var rpInvoiceId);
+                values.TryGetValue("payment_type", out _);
+                values.TryGetValue("payer_id", out _);
+                values.TryGetValue("receiver_id", out _);
+                values.TryGetValue("invoice", out _);
+                values.TryGetValue("payment_fee", out _);
+
+                var sb = new StringBuilder();
+                sb.AppendLine("Paypal IPN:");
+                foreach (var kvp in values)
+                {
+                    sb.AppendLine(kvp.Key + ": " + kvp.Value);
+                }
+
+                var newPaymentStatus = GetPaymentStatus(paymentStatus, pendingReason);
+                sb.AppendLine("New payment status: " + newPaymentStatus);
+
+                switch (txnType)
+                {
+                    case "recurring_payment_profile_created":
+                        //do nothing here
+                        break;
+                    case "recurring_payment":
+                    {
+                        var orderNumberGuid = Guid.Empty;
+                        try
+                        {
+                            orderNumberGuid = new Guid(rpInvoiceId);
+                        }
+                        catch
+                        {
+                            // ignored
+                        }
+
+                        var initialOrder = _orderService.GetOrderByGuid(orderNumberGuid);
+                        if (initialOrder != null)
+                        {
+                            var recurringPayments = _orderService.SearchRecurringPayments(0, 0, initialOrder.Id);
+                            foreach (var rp in recurringPayments)
+                            {
+                                switch (newPaymentStatus)
+                                {
+                                    case PaymentStatus.Authorized:
+                                    case PaymentStatus.Paid:
+                                    {
+                                        var recurringPaymentHistory = rp.RecurringPaymentHistory;
+                                        if (recurringPaymentHistory.Count == 0)
+                                        {
+                                            //first payment
+                                            var rph = new RecurringPaymentHistory
+                                            {
+                                                RecurringPaymentId = rp.Id,
+                                                OrderId = initialOrder.Id,
+                                                CreatedOnUtc = DateTime.UtcNow
+                                            };
+                                            rp.RecurringPaymentHistory.Add(rph);
+                                            _orderService.UpdateRecurringPayment(rp);
+                                        }
+                                        else
+                                        {
+                                            //next payments
+                                            _orderProcessingService.ProcessNextRecurringPayment(rp);
+                                        }
+                                    }
+
+                                        break;
+                                }
+                            }
+
+                            //this.OrderService.InsertOrderNote(newOrder.OrderId, sb.ToString(), DateTime.UtcNow);
+                            _logger.Information("PayPal IPN. Recurring info", new NopException(sb.ToString()));
+                        }
+                        else
+                        {
+                            _logger.Error("PayPal IPN. Order is not found", new NopException(sb.ToString()));
+                        }
+                    }
+
+                        break;
+                    default:
+                    {
+                        values.TryGetValue("custom", out var orderNumber);
+                        var orderNumberGuid = Guid.Empty;
+                        try
+                        {
+                            orderNumberGuid = new Guid(orderNumber);
+                        }
+                        catch
+                        {
+                            // ignored
+                        }
+
+                        var order = _orderService.GetOrderByGuid(orderNumberGuid);
+                        if (order != null)
+                        {
+                            //order note
+                            order.OrderNotes.Add(new OrderNote
+                            {
+                                Note = sb.ToString(),
+                                DisplayToCustomer = false,
+                                CreatedOnUtc = DateTime.UtcNow
+                            });
+                            _orderService.UpdateOrder(order);
+
+                            switch (newPaymentStatus)
+                            {
+                                case PaymentStatus.Pending:
+                                    break;
+                                case PaymentStatus.Authorized:
+                                    if (_orderProcessingService.CanMarkOrderAsAuthorized(order))
+                                        _orderProcessingService.MarkAsAuthorized(order);
+                                    break;
+                                case PaymentStatus.Paid:
+                                    if (_orderProcessingService.CanMarkOrderAsPaid(order))
+                                        _orderProcessingService.MarkOrderAsPaid(order);
+                                    break;
+                                case PaymentStatus.Refunded:
+                                    if (_orderProcessingService.CanRefundOffline(order))
+                                        _orderProcessingService.RefundOffline(order);
+                                    break;
+                                case PaymentStatus.Voided:
+                                    if (_orderProcessingService.CanVoidOffline(order))
+                                        _orderProcessingService.VoidOffline(order);
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                        else
+                            _logger.Error("PayPal IPN. Order is not found", new NopException(sb.ToString()));
+                    }
+
+                        break;
+                }
+            }
+            else
+            {
+                _logger.Error("PayPal IPN failed.", new NopException(ipnData));
+            }
+        }
+
+        /// <summary>
+        /// Verifies IPN
+        /// </summary>
+        /// <param name="ipnData">IPN data</param>
+        /// <param name="values">Values</param>
+        /// <returns>Result</returns>
+        public bool VerifyIPN(string ipnData, out Dictionary<string, string> values)
+        {
+            var req = (HttpWebRequest)WebRequest.Create(GetPaypalUrl());
+            req.Method = "POST";
+            req.ContentType = "application/x-www-form-urlencoded";
+
+            var formContent = $"{ipnData}&cmd=_notify-validate";
+            req.ContentLength = formContent.Length;
+
+            using (var sw = new StreamWriter(req.GetRequestStream(), Encoding.ASCII))
+            {
+                sw.Write(formContent);
+            }
+
+            string response;
+            using (var sr = new StreamReader(req.GetResponse().GetResponseStream()))
+            {
+                response = WebUtility.UrlDecode(sr.ReadToEnd());
+            }
+
+            var success = response.Trim().Equals("VERIFIED", StringComparison.OrdinalIgnoreCase);
+
+            values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var l in ipnData.Split('&'))
+            {
+                var line = l.Trim();
+                var equalPox = line.IndexOf('=');
+                if (equalPox >= 0)
+                    values.Add(line.Substring(0, equalPox), line.Substring(equalPox + 1));
+            }
+
+            return success;
         }
     }
 }

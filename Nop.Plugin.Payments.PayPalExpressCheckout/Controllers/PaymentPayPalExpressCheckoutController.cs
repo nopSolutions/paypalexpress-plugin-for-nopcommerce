@@ -71,8 +71,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             if (string.IsNullOrWhiteSpace(logoImageUrl))
                 return true;
 
-            Uri result;
-            if (!Uri.TryCreate(logoImageUrl, UriKind.Absolute, out result))
+            if (!Uri.TryCreate(logoImageUrl, UriKind.Absolute, out var result))
             {
                 validationErrors.Add("Logo Image URL is not in a valid format");
                 return false;
@@ -86,7 +85,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
 
             try
             {
-                using (var imageStream = HttpWebRequest.Create(result).GetResponse().GetResponseStream())
+                using (var imageStream = WebRequest.Create(result).GetResponse().GetResponseStream())
                 using (var bitmap = new Bitmap(imageStream))
                 {
                     if (bitmap.Width > 190)
@@ -112,24 +111,24 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
         public IActionResult Configure()
         {
             var model = new ConfigurationModel
-                            {
-                                ApiSignature = _payPalExpressCheckoutPaymentSettings.ApiSignature,
-                                LogoImageURL = _payPalExpressCheckoutPaymentSettings.LogoImageURL,
-                                CartBorderColor = _payPalExpressCheckoutPaymentSettings.CartBorderColor,
-                                DoNotHaveBusinessAccount = _payPalExpressCheckoutPaymentSettings.DoNotHaveBusinessAccount,
-                                EmailAddress = _payPalExpressCheckoutPaymentSettings.EmailAddress,
-                                EnableDebugLogging = _payPalExpressCheckoutPaymentSettings.EnableDebugLogging,
-                                IsLive = _payPalExpressCheckoutPaymentSettings.IsLive,
-                                Password = _payPalExpressCheckoutPaymentSettings.Password,
-                                Username = _payPalExpressCheckoutPaymentSettings.Username,
-                                AdditionalFee = _payPalExpressCheckoutPaymentSettings.AdditionalFee,
-                                AdditionalFeePercentage = _payPalExpressCheckoutPaymentSettings.AdditionalFeePercentage,
-                                LocaleCode = _payPalExpressCheckoutPaymentSettings.LocaleCode,
-                                PaymentAction = _payPalExpressCheckoutPaymentSettings.PaymentAction,
-                                RequireConfirmedShippingAddress = _payPalExpressCheckoutPaymentSettings.RequireConfirmedShippingAddress,
-                                PaymentActionOptions = _payPalExpressCheckoutService.GetPaymentActionOptions(_payPalExpressCheckoutPaymentSettings.PaymentAction),
-                                LocaleOptions = _payPalExpressCheckoutService.GetLocaleCodeOptions(_payPalExpressCheckoutPaymentSettings.LocaleCode),
-                            };
+            {
+                ApiSignature = _payPalExpressCheckoutPaymentSettings.ApiSignature,
+                LogoImageURL = _payPalExpressCheckoutPaymentSettings.LogoImageURL,
+                CartBorderColor = _payPalExpressCheckoutPaymentSettings.CartBorderColor,
+                DoNotHaveBusinessAccount = _payPalExpressCheckoutPaymentSettings.DoNotHaveBusinessAccount,
+                EmailAddress = _payPalExpressCheckoutPaymentSettings.EmailAddress,
+                EnableDebugLogging = _payPalExpressCheckoutPaymentSettings.EnableDebugLogging,
+                IsLive = _payPalExpressCheckoutPaymentSettings.IsLive,
+                Password = _payPalExpressCheckoutPaymentSettings.Password,
+                Username = _payPalExpressCheckoutPaymentSettings.Username,
+                AdditionalFee = _payPalExpressCheckoutPaymentSettings.AdditionalFee,
+                AdditionalFeePercentage = _payPalExpressCheckoutPaymentSettings.AdditionalFeePercentage,
+                LocaleCode = _payPalExpressCheckoutPaymentSettings.LocaleCode,
+                PaymentAction = _payPalExpressCheckoutPaymentSettings.PaymentAction,
+                RequireConfirmedShippingAddress = _payPalExpressCheckoutPaymentSettings.RequireConfirmedShippingAddress,
+                PaymentActionOptions = _payPalExpressCheckoutService.GetPaymentActionOptions(_payPalExpressCheckoutPaymentSettings.PaymentAction),
+                LocaleOptions = _payPalExpressCheckoutService.GetLocaleCodeOptions(_payPalExpressCheckoutPaymentSettings.LocaleCode)
+            };
 
             return View("~/Plugins/Payments.PayPalExpressCheckout/Views/Configure.cshtml", model);
         }
@@ -142,7 +141,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             if (!ModelState.IsValid)
                 return Configure();
 
-            if (IsLogoImageValid(model.LogoImageURL, out List<string> validationErrors))
+            if (IsLogoImageValid(model.LogoImageURL, out var validationErrors))
             {
                 _payPalExpressCheckoutPaymentSettings.ApiSignature = model.ApiSignature;
                 _payPalExpressCheckoutPaymentSettings.LogoImageURL = model.LogoImageURL;
@@ -157,8 +156,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
                 _payPalExpressCheckoutPaymentSettings.AdditionalFeePercentage = model.AdditionalFeePercentage;
                 _payPalExpressCheckoutPaymentSettings.LocaleCode = model.LocaleCode;
                 _payPalExpressCheckoutPaymentSettings.PaymentAction = model.PaymentAction;
-                _payPalExpressCheckoutPaymentSettings.RequireConfirmedShippingAddress =
-                    model.RequireConfirmedShippingAddress;
+                _payPalExpressCheckoutPaymentSettings.RequireConfirmedShippingAddress = model.RequireConfirmedShippingAddress;
 
                 _settingService.SaveSetting(_payPalExpressCheckoutPaymentSettings);
             }
@@ -166,9 +164,10 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             {
                 foreach (var validationError in validationErrors)
                 {
-                    ModelState.AddModelError("", validationError);
+                    ModelState.AddModelError(string.Empty, validationError);
                 }
             }
+
             model.PaymentActionOptions = _payPalExpressCheckoutService.GetPaymentActionOptions(model.PaymentAction);
             model.LocaleOptions = _payPalExpressCheckoutService.GetLocaleCodeOptions(model.LocaleCode);
 
@@ -279,7 +278,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             }
 
             //nothing should be rendered to visitor
-            return Content("");
+            return Content(string.Empty);
         }
 
         #endregion

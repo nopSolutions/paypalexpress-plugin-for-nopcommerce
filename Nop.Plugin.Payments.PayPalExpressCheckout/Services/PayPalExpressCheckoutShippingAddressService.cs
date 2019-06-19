@@ -18,10 +18,10 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         private readonly ICountryService _countryService;
         private readonly ICustomerService _customerService;
 
-        public PayPalExpressCheckoutShippingAddressService(IWorkContext workContext, 
-                                                    AddressSettings addressSettings, ILocalizationService localizationService,
-                                                    IStateProvinceService stateProvinceService, ICountryService countryService, 
-                                                    ICustomerService customerService)
+        public PayPalExpressCheckoutShippingAddressService(IWorkContext workContext,
+            AddressSettings addressSettings, ILocalizationService localizationService,
+            IStateProvinceService stateProvinceService, ICountryService countryService,
+            ICustomerService customerService)
         {
             _workContext = workContext;
             _addressSettings = addressSettings;
@@ -35,24 +35,26 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         {
             var model = new CheckoutShippingAddressModel();
             //existing addresses
-            var addresses = _workContext.CurrentCustomer.Addresses.Where(a => a.Country == null || a.Country.AllowsShipping).ToList();
+            var addresses = _workContext.CurrentCustomer.Addresses
+                .Where(a => a.Country == null || a.Country.AllowsShipping).ToList();
             foreach (var address in addresses)
             {
                 var addressModel = new AddressModel();
                 addressModel.PrepareModel(address,
-                                          false,
-                                          _addressSettings);
+                    false,
+                    _addressSettings);
                 model.ExistingAddresses.Add(addressModel);
             }
 
             //new address
             model.NewAddress.CountryId = selectedCountryId;
             model.NewAddress.PrepareModel(null,
-                                          false,
-                                          _addressSettings,
-                                          _localizationService,
-                                          _stateProvinceService,
-                                          () => _countryService.GetAllCountriesForShipping());
+                false,
+                _addressSettings,
+                _localizationService,
+                _stateProvinceService,
+                () => _countryService.GetAllCountriesForShipping());
+            
             return model;
         }
 
@@ -64,6 +66,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
             _workContext.CurrentCustomer.ShippingAddress = address;
             _customerService.UpdateCustomer(_workContext.CurrentCustomer);
+            
             return true;
         }
 
@@ -79,6 +82,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             _workContext.CurrentCustomer.Addresses.Add(address);
             _workContext.CurrentCustomer.ShippingAddress = address;
             _customerService.UpdateCustomer(_workContext.CurrentCustomer);
+            
             return true;
         }
     }

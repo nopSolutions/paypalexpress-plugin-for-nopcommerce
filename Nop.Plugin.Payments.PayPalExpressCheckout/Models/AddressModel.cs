@@ -1,12 +1,10 @@
 ﻿using System.Collections.Generic;
-using FluentValidation.Attributes;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
 {
-    [Validator(typeof(AddressValidator))]
     public partial class AddressModel : BaseNopEntityModel
     {
         public AddressModel()

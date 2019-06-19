@@ -22,11 +22,11 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
         /// <param name="stateProvinceService">State service (used to prepare a select list). null to don't prepare the list.</param>
         /// <param name="loadCountries">A function to load countries  (used to prepare a select list). null to don't prepare the list.</param>
         public static void PrepareModel(this AddressModel model,
-                                        Address address, bool excludeProperties, 
-                                        AddressSettings addressSettings,
-                                        ILocalizationService localizationService = null,
-                                        IStateProvinceService stateProvinceService = null,
-                                        Func<IList<Country>> loadCountries = null)
+            Address address, bool excludeProperties,
+            AddressSettings addressSettings,
+            ILocalizationService localizationService = null,
+            IStateProvinceService stateProvinceService = null,
+            Func<IList<Country>> loadCountries = null)
         {
             if (model == null)
                 throw new ArgumentNullException(nameof(model));
@@ -42,9 +42,13 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
                 model.Email = address.Email;
                 model.Company = address.Company;
                 model.CountryId = address.CountryId;
-                model.CountryName = address.Country !=null ? localizationService.GetLocalized(address.Country, x => x.Name) : null;
+                model.CountryName = address.Country != null
+                    ? localizationService?.GetLocalized(address.Country, x => x.Name)
+                    : null;
                 model.StateProvinceId = address.StateProvinceId;
-                model.StateProvinceName = address.StateProvince !=null ? localizationService.GetLocalized(address.StateProvince, x => x.Name) : null;
+                model.StateProvinceName = address.StateProvince != null
+                    ? localizationService?.GetLocalized(address.StateProvince, x => x.Name)
+                    : null;
                 model.City = address.City;
                 model.Address1 = address.Address1;
                 model.Address2 = address.Address2;
@@ -59,12 +63,16 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
                 if (localizationService == null)
                     throw new ArgumentNullException(nameof(localizationService));
 
-                model.AvailableCountries.Add(new SelectListItem { Text = localizationService.GetResource("Address.SelectCountry"), Value = "0" });
+                model.AvailableCountries.Add(new SelectListItem
+                {
+                    Text = localizationService.GetResource("Address.SelectCountry"),
+                    Value = "0"
+                });
                 foreach (var c in loadCountries())
                 {
                     model.AvailableCountries.Add(new SelectListItem
                     {
-                        Text = localizationService.GetLocalized(c, x =>x.Name),
+                        Text = localizationService.GetLocalized(c, x => x.Name),
                         Value = c.Id.ToString(),
                         Selected = c.Id == model.CountryId
                     });
@@ -84,20 +92,20 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
                         foreach (var s in states)
                         {
                             model.AvailableStates.Add(new SelectListItem
-                                                          {
-                                                              Text = localizationService.GetLocalized(s, x =>x.Name),
-                                                              Value = s.Id.ToString(),
-                                                              Selected = (s.Id == model.StateProvinceId)
-                                                          });
+                            {
+                                Text = localizationService.GetLocalized(s, x => x.Name),
+                                Value = s.Id.ToString(),
+                                Selected = s.Id == model.StateProvinceId
+                            });
                         }
                     }
                     else
                     {
                         model.AvailableStates.Add(new SelectListItem
-                                                      {
-                                                          Text = localizationService.GetResource("Address.OtherNonUS"),
-                                                          Value = "0"
-                                                      });
+                        {
+                            Text = localizationService.GetResource("Address.OtherNonUS"),
+                            Value = "0"
+                        });
                     }
                 }
             }
@@ -120,6 +128,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
             model.FaxEnabled = addressSettings.FaxEnabled;
             model.FaxRequired = addressSettings.FaxRequired;
         }
+
         public static Address ToEntity(this AddressModel model)
         {
             if (model == null)
@@ -128,6 +137,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
             var entity = new Address();
             return ToEntity(model, entity);
         }
+
         public static Address ToEntity(this AddressModel model, Address destination)
         {
             if (model == null)

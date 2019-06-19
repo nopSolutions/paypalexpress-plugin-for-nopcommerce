@@ -14,19 +14,19 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         public CustomSecurityHeaderType GetRequesterCredentials()
         {
             return new CustomSecurityHeaderType
-                       {
-                           Credentials = _payPalExpressCheckoutPaymentSettings.DoNotHaveBusinessAccount
-                                             ? new UserIdPasswordType
-                                                   {
-                                                       Subject = _payPalExpressCheckoutPaymentSettings.EmailAddress,
-                                                   }
-                                             : new UserIdPasswordType
-                                                   {
-                                                       Signature = _payPalExpressCheckoutPaymentSettings.ApiSignature,
-                                                       Username = _payPalExpressCheckoutPaymentSettings.Username,
-                                                       Password = _payPalExpressCheckoutPaymentSettings.Password,
-                                                   }
-                       };
+            {
+                Credentials = _payPalExpressCheckoutPaymentSettings.DoNotHaveBusinessAccount
+                    ? new UserIdPasswordType
+                    {
+                        Subject = _payPalExpressCheckoutPaymentSettings.EmailAddress
+                    }
+                    : new UserIdPasswordType
+                    {
+                        Signature = _payPalExpressCheckoutPaymentSettings.ApiSignature,
+                        Username = _payPalExpressCheckoutPaymentSettings.Username,
+                        Password = _payPalExpressCheckoutPaymentSettings.Password
+                    }
+            };
         }
     }
 }

@@ -51,6 +51,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             try
             {
                 var processPaymentRequest = _session.Get<ProcessPaymentRequest>("OrderPaymentInfo");
+                
                 if (processPaymentRequest == null)
                 {
                     model.RedirectToCart = true;
@@ -84,9 +85,11 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                         model.IsRedirected = true;
                         return model;
                     }
+
                     model.CompletedId = placeOrderResult.PlacedOrder.Id;
                     return model;
                 }
+
                 foreach (var error in placeOrderResult.Errors)
                     model.Warnings.Add(error);
             }
@@ -95,6 +98,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 _logger.Warning(exc.Message, exc);
                 model.Warnings.Add(exc.Message);
             }
+
             return model;
         }
     }

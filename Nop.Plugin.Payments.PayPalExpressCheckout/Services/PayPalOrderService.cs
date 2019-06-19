@@ -6,7 +6,6 @@ using Nop.Core.Domain.Orders;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Helpers;
 using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
 using Nop.Services.Common;
-using Nop.Services.Discounts;
 using Nop.Services.Orders;
 using Nop.Services.Shipping;
 
@@ -24,13 +23,13 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         private readonly ICheckoutAttributeParser _checkoutAttributeParser;
 
         public PayPalOrderService(IWorkContext workContext,
-                                  PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings,
-                                  IPayPalCurrencyCodeParser payPalCurrencyCodeParser,
-                                  IPayPalCartItemService payPalCartItemService,
-                                  IShippingService shippingService,
-                                  IGenericAttributeService genericAttributeService,
-                                  IStoreContext storeContext,
-                                  ICheckoutAttributeParser checkoutAttributeParser)
+            PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings,
+            IPayPalCurrencyCodeParser payPalCurrencyCodeParser,
+            IPayPalCartItemService payPalCartItemService,
+            IShippingService shippingService,
+            IGenericAttributeService genericAttributeService,
+            IStoreContext storeContext,
+            ICheckoutAttributeParser checkoutAttributeParser)
         {
             _workContext = workContext;
             _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
@@ -46,26 +45,17 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         {
             var currencyCode = _payPalCurrencyCodeParser.GetCurrencyCodeType(_workContext.WorkingCurrency);
 
-            decimal orderTotalDiscountAmount;
-            List<DiscountForCaching> appliedDiscounts;
-            int redeemedRewardPoints;
-            decimal redeemedRewardPointsAmount;
-            List<AppliedGiftCard> appliedGiftCards;
-            var orderTotalWithDiscount = _payPalCartItemService.GetCartTotal(cart, out orderTotalDiscountAmount,
-                out appliedDiscounts,
-                out redeemedRewardPoints,
-                out redeemedRewardPointsAmount,
-                out appliedGiftCards);
+            var orderTotalWithDiscount = _payPalCartItemService.GetCartTotal(cart, out var orderTotalDiscountAmount,
+                out _,
+                out _,
+                out _,
+                out var appliedGiftCards);
 
-            decimal subTotalWithDiscount;
-            decimal subTotalWithoutDiscount;
-            List<DiscountForCaching> subTotalAppliedDiscounts;
-            decimal subTotalDiscountAmount;
             var itemTotalWithDiscount = _payPalCartItemService.GetCartItemTotal(cart,
-                out subTotalDiscountAmount,
-                out subTotalAppliedDiscounts,
-                out subTotalWithoutDiscount,
-                out subTotalWithDiscount);
+                out var subTotalDiscountAmount,
+                out _,
+                out _,
+                out _);
 
             var giftCardsAmount = appliedGiftCards.Sum(x => x.AmountCanBeUsed);
 
@@ -85,29 +75,29 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 {
                     foreach (var caValue in caValues)
                     {
-                        if (caValue.PriceAdjustment > 0)
+                        if (caValue.PriceAdjustment <= 0) 
+                            continue;
+
+                        var checkoutAttrItem = new PaymentDetailsItemType
                         {
-                            var checkoutAttrItem = new PaymentDetailsItemType
-                            {
-                                Name = caValue.Name,
-                                Amount = caValue.PriceAdjustment.GetBasicAmountType(currencyCode),
-                                Quantity = "1"
-                            };
-                            items.Add(checkoutAttrItem);
-                        }
+                            Name = caValue.Name,
+                            Amount = caValue.PriceAdjustment.GetBasicAmountType(currencyCode),
+                            Quantity = "1"
+                        };
+
+                        items.Add(checkoutAttrItem);
                     }
                 }
             }
+
             if (orderTotalDiscountAmount > 0 || subTotalDiscountAmount > 0)
             {
                 var discountItem = new PaymentDetailsItemType
-                                       {
-                                           Name = "Discount",
-                                           Amount =
-                                               (-orderTotalDiscountAmount + -subTotalDiscountAmount).GetBasicAmountType(
-                                                   currencyCode),
-                                           Quantity = "1"
-                                       };
+                {
+                    Name = "Discount",
+                    Amount = (-orderTotalDiscountAmount + -subTotalDiscountAmount).GetBasicAmountType(currencyCode),
+                    Quantity = "1"
+                };
 
                 items.Add(discountItem);
             }
@@ -115,14 +105,13 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             foreach (var appliedGiftCard in appliedGiftCards)
             {
                 var giftCardItem = new PaymentDetailsItemType
-                                       {
-                                           Name = string.Format("Gift Card ({0})", appliedGiftCard.GiftCard.GiftCardCouponCode),
-                                           Amount = (-appliedGiftCard.AmountCanBeUsed).GetBasicAmountType(currencyCode),
-                                           Quantity = "1"
-                                       };
+                {
+                    Name = $"Gift Card ({appliedGiftCard.GiftCard.GiftCardCouponCode})",
+                    Amount = (-appliedGiftCard.AmountCanBeUsed).GetBasicAmountType(currencyCode),
+                    Quantity = "1"
+                };
 
                 items.Add(giftCardItem);
-
             }
 
             return new[]
@@ -145,25 +134,24 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         {
             var getShippingOptionResponse = _shippingService.GetShippingOptions(cart, _workContext.CurrentCustomer.ShippingAddress);
             decimal toAdd = 0;
+
             if (getShippingOptionResponse.ShippingOptions != null && getShippingOptionResponse.ShippingOptions.Any())
-            {
                 toAdd = getShippingOptionResponse.ShippingOptions.Max(option => option.Rate);
-            }
+
             var currencyCode = _payPalCurrencyCodeParser.GetCurrencyCodeType(_workContext.WorkingCurrency);
             var cartTotal = _payPalCartItemService.GetCartItemTotal(cart);
+
             return (cartTotal + toAdd).GetBasicAmountType(currencyCode);
         }
 
-        private IList<PaymentDetailsItemType> GetPaymentDetailsItems(IList<ShoppingCartItem> cart)
+        private IList<PaymentDetailsItemType> GetPaymentDetailsItems(IEnumerable<ShoppingCartItem> cart)
         {
             return cart.Select(item => _payPalCartItemService.CreatePaymentItem(item)).ToList();
         }
 
         public string GetBuyerEmail()
         {
-            return _workContext.CurrentCustomer != null
-                       ? _workContext.CurrentCustomer.Email
-                       : null;
+            return _workContext.CurrentCustomer?.Email;
         }
     }
 }

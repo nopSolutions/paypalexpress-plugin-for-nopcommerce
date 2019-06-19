@@ -39,9 +39,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Infrastructure
             builder.RegisterType<PayPalIPNService>().As<IPayPalIPNService>();
         }
 
-        public int Order
-        {
-            get { return 99; }
-        }
+        public int Order => 99;
     }
 }

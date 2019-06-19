@@ -18,10 +18,9 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
         private CurrencyCodeType GetCode(string currencyCode)
         {
-            CurrencyCodeType code;
-            return Enum.TryParse(currencyCode, out code)
-                       ? code
-                       : CurrencyCodeType.CustomCode;
+            return Enum.TryParse(currencyCode, out CurrencyCodeType code)
+                ? code
+                : CurrencyCodeType.CustomCode;
         }
     }
 }

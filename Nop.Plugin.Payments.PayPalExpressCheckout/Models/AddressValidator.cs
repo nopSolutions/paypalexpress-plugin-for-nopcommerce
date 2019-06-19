@@ -20,6 +20,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
             RuleFor(x => x.Email)
                 .EmailAddress()
                 .WithMessage(localizationService.GetResource("Common.WrongEmail"));
+            
             if (addressSettings.CountryEnabled)
             {
                 RuleFor(x => x.CountryId)
@@ -31,33 +32,25 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
             }
 
             if (addressSettings.CompanyRequired && addressSettings.CompanyEnabled)
-            {
                 RuleFor(x => x.Company).NotEmpty().WithMessage(localizationService.GetResource("Account.Fields.Company.Required"));
-            }
+            
             if (addressSettings.StreetAddressRequired && addressSettings.StreetAddressEnabled)
-            {
                 RuleFor(x => x.Address1).NotEmpty().WithMessage(localizationService.GetResource("Account.Fields.StreetAddress.Required"));
-            }
+           
             if (addressSettings.StreetAddress2Required && addressSettings.StreetAddress2Enabled)
-            {
                 RuleFor(x => x.Address2).NotEmpty().WithMessage(localizationService.GetResource("Account.Fields.StreetAddress2.Required"));
-            }
+            
             if (addressSettings.ZipPostalCodeRequired && addressSettings.ZipPostalCodeEnabled)
-            {
                 RuleFor(x => x.ZipPostalCode).NotEmpty().WithMessage(localizationService.GetResource("Account.Fields.ZipPostalCode.Required"));
-            }
+            
             if (addressSettings.CityRequired && addressSettings.CityEnabled)
-            {
                 RuleFor(x => x.City).NotEmpty().WithMessage(localizationService.GetResource("Account.Fields.City.Required"));
-            }
+            
             if (addressSettings.PhoneRequired && addressSettings.PhoneEnabled)
-            {
                 RuleFor(x => x.PhoneNumber).NotEmpty().WithMessage(localizationService.GetResource("Account.Fields.Phone.Required"));
-            }
+            
             if (addressSettings.FaxRequired && addressSettings.FaxEnabled)
-            {
                 RuleFor(x => x.FaxNumber).NotEmpty().WithMessage(localizationService.GetResource("Account.Fields.Fax.Required"));
-            }
         }
     }
 }

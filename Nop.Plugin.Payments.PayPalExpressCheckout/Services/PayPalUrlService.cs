@@ -17,12 +17,12 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
         public string GetReturnURL()
         {
-            return string.Format("{0}Plugins/PaymentPayPalExpressCheckout/ReturnHandler", _webHelper.GetStoreLocation());
+            return $"{_webHelper.GetStoreLocation()}Plugins/PaymentPayPalExpressCheckout/ReturnHandler";
         }
 
         public string GetCancelURL()
         {
-            return string.Format("{0}cart", _webHelper.GetStoreLocation());
+            return $"{_webHelper.GetStoreLocation()}cart";
         }
 
         public string GetCallbackURL()

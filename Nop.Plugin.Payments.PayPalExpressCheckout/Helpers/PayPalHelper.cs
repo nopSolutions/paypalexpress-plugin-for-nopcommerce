@@ -4,10 +4,12 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
+using Nop.Core;
 using Nop.Core.Domain.Logging;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Infrastructure;
 using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
+using Nop.Services.Directory;
 using Nop.Services.Logging;
 using Nop.Services.Orders;
 
@@ -140,10 +142,14 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
 
         public static BasicAmountType GetBasicAmountType(this decimal value, CurrencyCodeType currency)
         {
+            var currencyService = EngineContext.Current.Resolve<ICurrencyService>();
+            var workContext = EngineContext.Current.Resolve<IWorkContext>();
+            var valueInCustomerCurrency = currencyService.ConvertCurrency(value, workContext.WorkingCurrency.Rate);
+            
             return new BasicAmountType
             {
                 currencyID = currency,
-                Value = Math.Round(value, 2).ToString("N", new CultureInfo("en-us"))
+                Value = Math.Round(valueInCustomerCurrency, 2).ToString("N", new CultureInfo("en-us"))
             };
         }
 

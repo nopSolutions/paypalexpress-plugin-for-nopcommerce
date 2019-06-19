@@ -87,6 +87,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         {
             // populate payment details
             var currencyCodeType = _payPalCurrencyCodeParser.GetCurrencyCodeType(_workContext.WorkingCurrency);
+            
             var paymentDetails = new PaymentDetailsType
             {
                 OrderTotal = processPaymentRequest.OrderTotal.GetBasicAmountType(currencyCodeType),

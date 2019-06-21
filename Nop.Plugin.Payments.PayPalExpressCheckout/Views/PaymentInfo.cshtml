@@ -7,9 +7,18 @@
     <p class="error">@error</p>
 }
     <script asp-location="Footer">
-    $(document).ready(function () {
-        $('#payPalExpressCheckoutImage').click(function () {
-            setLocation('@Url.RouteUrl("Plugin.Payments.PayPalExpressCheckout.SubmitButton")');
+        $(document).ready(function() {
+            $('#payPalExpressCheckoutImage').click(function() {
+                //terms of service
+                if ($('#termsofservice').length > 0) {
+                    //terms of service element exists
+                    if (!$('#termsofservice').is(':checked')) {
+                        $("#terms-of-service-warning-box").dialog();
+                    } else {
+                        setLocation('@Url.RouteUrl("Plugin.Payments.PayPalExpressCheckout.SubmitButton")');
+                    }
+                }
+            });
         });
-    });
+   
     </script>

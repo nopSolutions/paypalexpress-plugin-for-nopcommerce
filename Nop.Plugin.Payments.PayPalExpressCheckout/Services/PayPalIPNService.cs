@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Text;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Net.Http.Headers;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
@@ -14,13 +15,15 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
     public class PayPalIPNService : IPayPalIPNService
     {
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IOrderService _orderService;
         private readonly IOrderProcessingService _orderProcessingService;
         private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
         private readonly ILogger _logger;
 
-        public PayPalIPNService(IOrderService orderService, IOrderProcessingService orderProcessingService, PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings, ILogger logger)
+        public PayPalIPNService(IHttpContextAccessor httpContextAccessor, IOrderService orderService, IOrderProcessingService orderProcessingService, PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings, ILogger logger)
         {
+            _httpContextAccessor = httpContextAccessor;
             _orderService = orderService;
             _orderProcessingService = orderProcessingService;
             _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
@@ -254,6 +257,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
             var formContent = $"{ipnData}&cmd=_notify-validate";
             req.ContentLength = formContent.Length;
+            req.UserAgent = _httpContextAccessor.HttpContext.Request.Headers[HeaderNames.UserAgent];
 
             using (var sw = new StreamWriter(req.GetRequestStream(), Encoding.ASCII))
             {
@@ -261,7 +265,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             }
 
             string response;
-            using (var sr = new StreamReader(req.GetResponse().GetResponseStream()))
+            using (var sr = new StreamReader(req.GetResponse().GetResponseStream() ?? new MemoryStream()))
             {
                 response = WebUtility.UrlDecode(sr.ReadToEnd());
             }

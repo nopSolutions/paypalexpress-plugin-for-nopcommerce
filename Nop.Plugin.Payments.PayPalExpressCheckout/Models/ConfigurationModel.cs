@@ -41,12 +41,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
         [NopResourceDisplayName("Plugins.Payments.PayPalExpressCheckout.Fields.PaymentAction")]
         public PaymentActionCodeType PaymentAction { get; set; }
 
-        [NopResourceDisplayName("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFee")]
-        public decimal AdditionalFee { get; set; }
-
-        [NopResourceDisplayName("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFeePercentage")]
-        public bool AdditionalFeePercentage { get; set; }
-
         [NopResourceDisplayName("Plugins.Payments.PayPalExpressCheckout.Fields.EnableDebugLogging")]
         public bool EnableDebugLogging { get; set; }
 

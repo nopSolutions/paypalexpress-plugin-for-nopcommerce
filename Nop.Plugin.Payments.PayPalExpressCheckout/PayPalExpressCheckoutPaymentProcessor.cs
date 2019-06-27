@@ -129,8 +129,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
         /// <returns>Additional handling fee</returns>
         public decimal GetAdditionalHandlingFee(IList<ShoppingCartItem> cart)
         {
-            return _paymentService.CalculateAdditionalFee(cart,
-                _payPalExpressCheckoutPaymentSettings.AdditionalFee, _payPalExpressCheckoutPaymentSettings.AdditionalFeePercentage);
+            return decimal.Zero;
         }
 
         /// <summary>
@@ -290,10 +289,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
             _settingService.SaveSetting(new PayPalExpressCheckoutPaymentSettings());
 
             // locales
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFee", "Additional fee");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFee.Hint", "Enter additional fee to charge your customers.");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFeePercentage", "Additional fee. Use percentage");
-            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFeePercentage.Hint", "Determines whether to apply a percentage additional fee to the order total. If not enabled, a fixed value is used.");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.ApiSignature", "API Signature");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.ApiSignature.Hint", "The API Signature specified in your PayPal account.");
             _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.CartBorderColor", "Cart Border Color");
@@ -332,10 +327,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
             _settingService.DeleteSetting<PayPalExpressCheckoutPaymentSettings>();
 
             // locales
-            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFee");
-            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFee.Hint");
-            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFeePercentage");
-            _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.AdditionalFeePercentage.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.ApiSignature");
             _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.ApiSignature.Hint");
             _localizationService.DeletePluginLocaleResource("Plugins.Payments.PayPalExpressCheckout.Fields.CartBorderColor");

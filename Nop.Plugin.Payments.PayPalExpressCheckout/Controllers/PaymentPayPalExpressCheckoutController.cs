@@ -121,8 +121,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
                 IsLive = _payPalExpressCheckoutPaymentSettings.IsLive,
                 Password = _payPalExpressCheckoutPaymentSettings.Password,
                 Username = _payPalExpressCheckoutPaymentSettings.Username,
-                AdditionalFee = _payPalExpressCheckoutPaymentSettings.AdditionalFee,
-                AdditionalFeePercentage = _payPalExpressCheckoutPaymentSettings.AdditionalFeePercentage,
                 LocaleCode = _payPalExpressCheckoutPaymentSettings.LocaleCode,
                 PaymentAction = _payPalExpressCheckoutPaymentSettings.PaymentAction,
                 RequireConfirmedShippingAddress = _payPalExpressCheckoutPaymentSettings.RequireConfirmedShippingAddress,
@@ -152,8 +150,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
                 _payPalExpressCheckoutPaymentSettings.IsLive = model.IsLive;
                 _payPalExpressCheckoutPaymentSettings.Password = model.Password;
                 _payPalExpressCheckoutPaymentSettings.Username = model.Username;
-                _payPalExpressCheckoutPaymentSettings.AdditionalFee = model.AdditionalFee;
-                _payPalExpressCheckoutPaymentSettings.AdditionalFeePercentage = model.AdditionalFeePercentage;
                 _payPalExpressCheckoutPaymentSettings.LocaleCode = model.LocaleCode;
                 _payPalExpressCheckoutPaymentSettings.PaymentAction = model.PaymentAction;
                 _payPalExpressCheckoutPaymentSettings.RequireConfirmedShippingAddress = model.RequireConfirmedShippingAddress;

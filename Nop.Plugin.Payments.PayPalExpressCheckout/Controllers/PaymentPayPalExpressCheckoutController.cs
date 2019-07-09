@@ -6,6 +6,9 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
+using Nop.Core;
+using Nop.Core.Domain.Customers;
+using Nop.Core.Domain.Orders;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Models;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Services;
 using Nop.Services.Configuration;
@@ -20,6 +23,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
     {
         #region Fields
 
+        private readonly CustomerSettings _customerSettings;
         private readonly IPayPalExpressCheckoutConfirmOrderService _payPalExpressCheckoutConfirmOrderService;
         private readonly IPayPalExpressCheckoutPlaceOrderService _payPalExpressCheckoutPlaceOrderService;
         private readonly IPayPalExpressCheckoutService _payPalExpressCheckoutService;
@@ -28,13 +32,17 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
         private readonly IPayPalRedirectionService _payPalRedirectionService;
         private readonly ISettingService _settingService;
         private readonly IShoppingCartService _shoppingCartService;
+        private readonly IWorkContext _workContext;
+        private readonly OrderSettings _orderSettings;
         private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
+
 
         #endregion
 
         #region Ctor
 
-        public PaymentPayPalExpressCheckoutController(IPayPalExpressCheckoutConfirmOrderService payPalExpressCheckoutConfirmOrderService,
+        public PaymentPayPalExpressCheckoutController(CustomerSettings customerSettings,
+            IPayPalExpressCheckoutConfirmOrderService payPalExpressCheckoutConfirmOrderService,
             IPayPalExpressCheckoutPlaceOrderService payPalExpressCheckoutPlaceOrderService,
             IPayPalExpressCheckoutService payPalExpressCheckoutService,
             IPayPalExpressCheckoutShippingMethodService payPalExpressCheckoutShippingMethodService,
@@ -42,8 +50,11 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             IPayPalRedirectionService payPalRedirectionService,
             ISettingService settingService,
             IShoppingCartService shoppingCartService,
+            IWorkContext workContext,
+            OrderSettings orderSettings,
             PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings)
         {
+            _customerSettings = customerSettings;
             _payPalExpressCheckoutConfirmOrderService = payPalExpressCheckoutConfirmOrderService;
             _payPalExpressCheckoutPlaceOrderService = payPalExpressCheckoutPlaceOrderService;
             _payPalExpressCheckoutService = payPalExpressCheckoutService;
@@ -52,6 +63,8 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             _payPalRedirectionService = payPalRedirectionService;
             _settingService = settingService;
             _shoppingCartService = shoppingCartService;
+            _workContext = workContext;
+            _orderSettings = orderSettings;
             _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
         }
 
@@ -176,6 +189,12 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
 
             if (!cart.Any())
                 return RedirectToRoute("ShoppingCart");
+
+            var downloadableProductsRequireRegistration =
+                _customerSettings.RequireRegistrationForDownloadableProducts && cart.Any(sci => sci.Product.IsDownload);
+
+            if (_workContext.CurrentCustomer.IsGuest() && (!_orderSettings.AnonymousCheckoutAllowed || downloadableProductsRequireRegistration))
+                return Challenge();
 
             return Redirect(_payPalRedirectionService.ProcessSubmitButton(cart, TempData));
         }

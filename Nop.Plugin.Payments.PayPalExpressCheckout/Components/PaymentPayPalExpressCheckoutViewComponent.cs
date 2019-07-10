@@ -52,7 +52,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Components
 
             var model = new PaymentInfoModel
             {
-                ButtonImageLocation = "https://www.paypalobjects.com/en_GB/i/btn/btn_xpressCheckout.gif"
+                ButtonImageLocation = "https://paypalobjects.com/en_GB/i/btn/btn_xpressCheckout.gif"
             };
 
             return View("~/Plugins/Payments.PayPalExpressCheckout/Views/PaymentInfo.cshtml", model);

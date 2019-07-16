@@ -7,7 +7,9 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
     public interface IPayPalOrderService
     {
         PaymentDetailsType[] GetPaymentDetails(IList<ShoppingCartItem> cart);
+
         BasicAmountType GetMaxAmount(IList<ShoppingCartItem> cart);
+
         string GetBuyerEmail();
     }
 }

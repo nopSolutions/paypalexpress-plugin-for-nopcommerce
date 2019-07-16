@@ -36,7 +36,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
         private readonly OrderSettings _orderSettings;
         private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
 
-
         #endregion
 
         #region Ctor
@@ -281,7 +280,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             if (checkoutPlaceOrderModel.CompletedId.HasValue)
                 return RedirectToRoute("CheckoutCompleted", new { orderId = checkoutPlaceOrderModel.CompletedId });
 
-            //If we got this far, something failed, redisplay form
+            //if we got this far, something failed, redisplay form
             return View("~/Plugins/Payments.PayPalExpressCheckout/Views/Confirm.cshtml", checkoutPlaceOrderModel);
         }
 

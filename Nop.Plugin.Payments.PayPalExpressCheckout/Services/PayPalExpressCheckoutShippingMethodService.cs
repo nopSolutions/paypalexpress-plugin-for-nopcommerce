@@ -56,9 +56,9 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 //performance optimization. cache returned shipping options.
                 //we'll use them later (after a customer has selected an option).
                 _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer,
-                                                       NopCustomerDefaults.OfferedShippingOptionsAttribute,
-                                                       getShippingOptionResponse.ShippingOptions,
-                                                       _storeContext.CurrentStore.Id);
+                    NopCustomerDefaults.OfferedShippingOptionsAttribute,
+                    getShippingOptionResponse.ShippingOptions,
+                    _storeContext.CurrentStore.Id);
 
                 foreach (var shippingOption in getShippingOptionResponse.ShippingOptions)
                 {
@@ -105,8 +105,10 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                     shippingOptionToSelect.Selected = true;
             }
             else
+            {
                 foreach (var error in getShippingOptionResponse.Errors)
                     model.Warnings.Add(error);
+            }
 
             return model;
         }

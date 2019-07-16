@@ -9,9 +9,13 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
     public interface IPayPalCartItemService
     {
         decimal GetCartItemTotal(IList<ShoppingCartItem> cart);
+
         decimal GetCartTotal(IList<ShoppingCartItem> cart);
+
         decimal GetTax(IList<ShoppingCartItem> cart);
+
         decimal GetShippingTotal(IList<ShoppingCartItem> cart);
+
         PaymentDetailsItemType CreatePaymentItem(ShoppingCartItem item);
 
         decimal GetCartTotal(IList<ShoppingCartItem> cart, out decimal orderTotalDiscountAmount,

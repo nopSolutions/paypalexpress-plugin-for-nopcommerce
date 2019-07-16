@@ -47,7 +47,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Components
 
             var plugin = _paymentPluginManager.LoadPluginBySystemName("Payments.PayPalExpressCheckout");
 
-            if(plugin == null || _paymentPluginManager.GetRestrictedCountryIds(plugin).Contains(filterByCountryId))
+            if (plugin == null || _paymentPluginManager.GetRestrictedCountryIds(plugin).Contains(filterByCountryId))
                 return Content(string.Empty);
 
             var model = new PaymentInfoModel

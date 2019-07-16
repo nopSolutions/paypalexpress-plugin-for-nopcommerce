@@ -82,6 +82,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                         : ItemCategoryType.Physical,
                 Quantity = item.Quantity.ToString()
             };
+
             return paymentDetailsItemType;
         }
 
@@ -105,6 +106,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             _orderTotalCalculationService.GetShoppingCartSubTotal(cart, false, out subTotalDiscountAmount,
                 out subTotalAppliedDiscounts,
                 out subTotalWithoutDiscount, out subTotalWithDiscount);
+
             return subTotalWithDiscount;
         }
     }

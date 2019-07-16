@@ -21,7 +21,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
 
         private readonly ISession _session;
         private readonly ILocalizationService _localizationService;
-        private readonly IPaymentService _paymentService;
         private readonly IPayPalInterfaceService _payPalInterfaceService;
         private readonly IPayPalRequestService _payPalRequestService;
         private readonly IPayPalSecurityService _payPalSecurityService;
@@ -35,7 +34,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
 
         public PayPalExpressCheckoutPaymentProcessor(IHttpContextAccessor httpContextAccessor,
             ILocalizationService localizationService,
-            IPaymentService paymentService,
             IPayPalInterfaceService payPalInterfaceService,
             IPayPalRequestService payPalRequestService,
             IPayPalSecurityService payPalSecurityService,
@@ -45,7 +43,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
         {
             _session = httpContextAccessor.HttpContext?.Session;
             _localizationService = localizationService;
-            _paymentService = paymentService;
             _payPalInterfaceService = payPalInterfaceService;
             _payPalRequestService = payPalRequestService;
             _payPalSecurityService = payPalSecurityService;

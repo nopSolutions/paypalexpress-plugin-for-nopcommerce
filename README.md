@@ -3,7 +3,7 @@
 
 nopCommerce site: [https://www.nopcommerce.com](https://www.nopcommerce.com)
 
-Listing on nopCommerce "extensions and themes" catalog: [https://www.nopcommerce.com/p/1149/paypal-express-payment-plugin.aspx](https://www.nopcommerce.com/p/1149/paypal-express-payment-plugin.aspx)
+Listing on nopCommerce "extensions and themes" catalog: [https://www.nopcommerce.com/paypal-express-payment-plugin](https://www.nopcommerce.com/paypal-express-payment-plugin)
 
 PayPal site: [https://www.paypal.com](https://www.paypal.com)
 

@@ -51,7 +51,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             try
             {
                 var processPaymentRequest = _session.Get<ProcessPaymentRequest>("OrderPaymentInfo");
-                
+
                 if (processPaymentRequest == null)
                 {
                     model.RedirectToCart = true;

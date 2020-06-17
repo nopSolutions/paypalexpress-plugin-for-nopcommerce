@@ -6,23 +6,30 @@ using Nop.Core;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
+using Nop.Services.Customers;
 using Nop.Services.Orders;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
     public class PayPalExpressCheckoutService : IPayPalExpressCheckoutService
     {
+        private readonly ICustomerService _customerService;
         private readonly IOrderService _orderService;
+        private readonly IShoppingCartService _shoppingCartService;
         private readonly IStoreContext _storeContext;
         private readonly IWorkContext _workContext;
         private readonly OrderSettings _orderSettings;
 
-        public PayPalExpressCheckoutService(IOrderService orderService,
+        public PayPalExpressCheckoutService(ICustomerService customerService,
+            IOrderService orderService,
+            IShoppingCartService shoppingCartService,
             IStoreContext storeContext,
             IWorkContext workContext,
             OrderSettings orderSettings)
         {
+            _customerService = customerService;
             _orderService = orderService;
+            _shoppingCartService = shoppingCartService;
             _storeContext = storeContext;
             _workContext = workContext;
             _orderSettings = orderSettings;
@@ -30,15 +37,12 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
         public IList<ShoppingCartItem> GetCart()
         {
-            return _workContext.CurrentCustomer.ShoppingCartItems
-                .Where(sci => sci.ShoppingCartType == ShoppingCartType.ShoppingCart)
-                .Where(sci => sci.StoreId == _storeContext.CurrentStore.Id)
-                .ToList();
+            return _shoppingCartService.GetShoppingCart(_workContext.CurrentCustomer, ShoppingCartType.ShoppingCart, _storeContext.CurrentStore.Id);
         }
 
         public bool IsAllowedToCheckout()
         {
-            return !(_workContext.CurrentCustomer.IsGuest() && !_orderSettings.AnonymousCheckoutAllowed);
+            return !(_customerService.IsGuest(_workContext.CurrentCustomer) && !_orderSettings.AnonymousCheckoutAllowed);
         }
 
         public bool IsMinimumOrderPlacementIntervalValid(Customer customer)
@@ -54,7 +58,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 return true;
 
             var interval = DateTime.UtcNow - lastOrder.CreatedOnUtc;
-            
+
             return interval.TotalSeconds > _orderSettings.MinimumOrderPlacementInterval;
         }
 

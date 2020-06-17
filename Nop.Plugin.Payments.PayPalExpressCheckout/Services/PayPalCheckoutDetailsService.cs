@@ -48,7 +48,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
             _workContext.CurrentCustomer = customer;
 
-            var cart = customer.ShoppingCartItems.Where(sci => sci.ShoppingCartType == ShoppingCartType.ShoppingCart).ToList();
+            var cart = _shoppingCartService.GetShoppingCart(customer, ShoppingCartType.ShoppingCart).ToList();
 
             // get/update billing address
             var billingFirstName = checkoutDetails.PayerInfo.PayerName.FirstName;
@@ -68,7 +68,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             if (billingCountry != null)
                 billingCountryId = billingCountry.Id;
 
-            var billingAddress = _addressService.FindAddress(_workContext.CurrentCustomer.Addresses.ToList(),
+            var billingAddress = _addressService.FindAddress(_customerService.GetAddressesByCustomerId(_workContext.CurrentCustomer.Id).ToList(),
                 billingFirstName, billingLastName, billingPhoneNumber,
                 billingEmail, string.Empty, string.Empty,
                 billingAddress1, billingAddress2, billingCity,
@@ -94,11 +94,12 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                     CreatedOnUtc = DateTime.UtcNow
                 };
 
-                customer.Addresses.Add(billingAddress);
+                _addressService.InsertAddress(billingAddress);
+                _customerService.InsertCustomerAddress(customer, billingAddress);
             }
 
             //set default billing address
-            customer.BillingAddress = billingAddress;
+            customer.BillingAddressId = billingAddress.Id;
             _customerService.UpdateCustomer(customer);
 
             _genericAttributeService.SaveAttribute<ShippingOption>(customer, NopCustomerDefaults.SelectedShippingOptionAttribute, null, customer.RegisteredInStoreId);
@@ -129,7 +130,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 if (shippingCountry != null)
                     shippingCountryId = shippingCountry.Id;
 
-                var shippingAddress = _addressService.FindAddress(_workContext.CurrentCustomer.Addresses.ToList(),
+                var shippingAddress = _addressService.FindAddress(_customerService.GetAddressesByCustomerId(_workContext.CurrentCustomer.Id).ToList(),
                     shippingFirstName, shippingLastName, shippingPhoneNumber,
                     shippingEmail, string.Empty, string.Empty,
                     shippingAddress1, shippingAddress2, shippingCity,
@@ -155,11 +156,12 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                         CreatedOnUtc = DateTime.UtcNow
                     };
 
-                    customer.Addresses.Add(shippingAddress);
+                    _addressService.InsertAddress(shippingAddress);
+                    _customerService.InsertCustomerAddress(customer, shippingAddress);
                 }
 
                 //set default shipping address
-                customer.ShippingAddress = shippingAddress;
+                customer.ShippingAddressId = shippingAddress.Id;
                 _customerService.UpdateCustomer(customer);
             }
 

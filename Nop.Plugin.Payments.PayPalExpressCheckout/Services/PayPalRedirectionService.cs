@@ -57,60 +57,56 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
         public string ProcessSubmitButton(IList<ShoppingCartItem> cart, ITempDataDictionary tempData)
         {
-            using (var payPalApiaaInterface = _payPalInterfaceService.GetAAService())
-            {
-                var customSecurityHeaderType = _payPalSecurityService.GetRequesterCredentials();
+            using var payPalApiaaInterface = _payPalInterfaceService.GetAAService();
+            var customSecurityHeaderType = _payPalSecurityService.GetRequesterCredentials();
 
-                var setExpressCheckoutResponse = payPalApiaaInterface.SetExpressCheckout(
-                    ref customSecurityHeaderType, _payPalRequestService.GetSetExpressCheckoutRequest(cart));
+            var setExpressCheckoutResponse = payPalApiaaInterface.SetExpressCheckout(
+                ref customSecurityHeaderType, _payPalRequestService.GetSetExpressCheckoutRequest(cart));
 
-                var result = new ProcessPaymentResult();
-                var redirectUrl = string.Empty;
-                setExpressCheckoutResponse.HandleResponse(result,
-                    (paymentResult, type) =>
-                    {
-                        var token = setExpressCheckoutResponse.Token;
-                        redirectUrl = _payPalUrlService.GetExpressCheckoutRedirectUrl(token);
-                    },
-                    (paymentResult, type) =>
-                    {
-                        _logger.InsertLog(LogLevel.Error, "Error passing cart to PayPal",
-                            string.Join(", ", setExpressCheckoutResponse.Errors.Select(errorType => errorType.ErrorCode + ": " + errorType.LongMessage)));
-                        tempData["paypal-ec-error"] = "An error occurred setting up your cart for PayPal.";
-                        redirectUrl = _webHelper.GetUrlReferrer();
-                    }, Guid.Empty);
+            var result = new ProcessPaymentResult();
+            var redirectUrl = string.Empty;
+            setExpressCheckoutResponse.HandleResponse(result,
+                (paymentResult, type) =>
+                {
+                    var token = setExpressCheckoutResponse.Token;
+                    redirectUrl = _payPalUrlService.GetExpressCheckoutRedirectUrl(token);
+                },
+                (paymentResult, type) =>
+                {
+                    _logger.InsertLog(LogLevel.Error, "Error passing cart to PayPal",
+                        string.Join(", ", setExpressCheckoutResponse.Errors.Select(errorType => errorType.ErrorCode + ": " + errorType.LongMessage)));
+                    tempData["paypal-ec-error"] = "An error occurred setting up your cart for PayPal.";
+                    redirectUrl = _webHelper.GetUrlReferrer();
+                }, Guid.Empty);
 
-                return redirectUrl;
-            }
+            return redirectUrl;
         }
 
         public bool ProcessReturn(string token)
         {
-            using (var payPalApiaaInterfaceClient = _payPalInterfaceService.GetAAService())
-            {
-                var customSecurityHeaderType = _payPalSecurityService.GetRequesterCredentials();
-                var details = payPalApiaaInterfaceClient.GetExpressCheckoutDetails(ref customSecurityHeaderType,
-                    _payPalRequestService.GetGetExpressCheckoutDetailsRequest(token));
+            using var payPalApiaaInterfaceClient = _payPalInterfaceService.GetAAService();
+            var customSecurityHeaderType = _payPalSecurityService.GetRequesterCredentials();
+            var details = payPalApiaaInterfaceClient.GetExpressCheckoutDetails(ref customSecurityHeaderType,
+                _payPalRequestService.GetGetExpressCheckoutDetailsRequest(token));
 
-                details.LogResponse(Guid.Empty);
-                if (details.Ack != AckCodeType.Success && details.Ack != AckCodeType.SuccessWithWarning)
-                    return false;
+            details.LogResponse(Guid.Empty);
+            if (details.Ack != AckCodeType.Success && details.Ack != AckCodeType.SuccessWithWarning)
+                return false;
 
-                var request =
-                    _payPalCheckoutDetailsService.SetCheckoutDetails(
-                        details.GetExpressCheckoutDetailsResponseDetails);
+            var request =
+                _payPalCheckoutDetailsService.SetCheckoutDetails(
+                    details.GetExpressCheckoutDetailsResponseDetails);
 
-                //set previous order GUID (if exists)
-                GenerateOrderGuid(request);
+            //set previous order GUID (if exists)
+            GenerateOrderGuid(request);
 
-                _session.Set("OrderPaymentInfo", request);
+            _session.Set("OrderPaymentInfo", request);
 
-                var customer = _customerService.GetCustomerById(request.CustomerId);
+            var customer = _customerService.GetCustomerById(request.CustomerId);
 
-                _workContext.CurrentCustomer = customer;
-                _customerService.UpdateCustomer(_workContext.CurrentCustomer);
-                return true;
-            }
+            _workContext.CurrentCustomer = customer;
+            _customerService.UpdateCustomer(_workContext.CurrentCustomer);
+            return true;
         }
 
         /// <summary>

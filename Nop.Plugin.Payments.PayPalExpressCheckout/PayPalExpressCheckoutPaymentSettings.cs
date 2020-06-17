@@ -59,7 +59,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
         /// Gets or sets a payment Action
         /// </summary>
         public PaymentActionCodeType PaymentAction { get; set; }
-        
+
         /// <summary>
         /// Gets or sets a value indicating whether to enable debug logging
         /// </summary>

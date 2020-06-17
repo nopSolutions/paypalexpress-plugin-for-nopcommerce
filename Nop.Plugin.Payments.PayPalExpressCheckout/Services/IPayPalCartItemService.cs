@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
+using Nop.Core.Domain.Discounts;
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
-using Nop.Services.Discounts;
 using Nop.Services.Orders;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
@@ -19,9 +19,9 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         PaymentDetailsItemType CreatePaymentItem(ShoppingCartItem item);
 
         decimal GetCartTotal(IList<ShoppingCartItem> cart, out decimal orderTotalDiscountAmount,
-                             out List<DiscountForCaching> appliedDiscounts, out int redeemedRewardPoints,
-                             out decimal redeemedRewardPointsAmount, out List<AppliedGiftCard> appliedGiftCards);
+                            out List<Discount> appliedDiscounts, out int redeemedRewardPoints,
+                            out decimal redeemedRewardPointsAmount, out List<AppliedGiftCard> appliedGiftCards);
 
-        decimal GetCartItemTotal(IList<ShoppingCartItem> cart, out decimal subTotalDiscountAmount, out List<DiscountForCaching> subTotalAppliedDiscounts, out decimal subTotalWithoutDiscount, out decimal subTotalWithDiscount);
+        decimal GetCartItemTotal(IList<ShoppingCartItem> cart, out decimal subTotalDiscountAmount, out List<Discount> subTotalAppliedDiscounts, out decimal subTotalWithoutDiscount, out decimal subTotalWithDiscount);
     }
 }

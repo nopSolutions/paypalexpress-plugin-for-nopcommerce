@@ -39,12 +39,12 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             var model = new CheckoutConfirmModel();
             //min order amount validation
             var minOrderTotalAmountOk = _orderProcessingService.ValidateMinOrderTotalAmount(cart);
-            if (minOrderTotalAmountOk) 
+            if (minOrderTotalAmountOk)
                 return model;
 
             var minOrderTotalAmount = _currencyService.ConvertFromPrimaryStoreCurrency(_orderSettings.MinOrderTotalAmount, _workContext.WorkingCurrency);
             model.MinOrderTotalWarning = string.Format(_localizationService.GetResource("Checkout.MinOrderTotalAmount"), _priceFormatter.FormatPrice(minOrderTotalAmount, true, false));
-            
+
             return model;
         }
     }

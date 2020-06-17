@@ -13,7 +13,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
         DoExpressCheckoutPaymentReq GetDoExpressCheckoutPaymentRequest(ProcessPaymentRequest processPaymentRequest);
 
-        DoCaptureReq GetDoCaptureRequest (CapturePaymentRequest capturePaymentRequest);
+        DoCaptureReq GetDoCaptureRequest(CapturePaymentRequest capturePaymentRequest);
 
         RefundTransactionReq GetRefundTransactionRequest(RefundPaymentRequest refundPaymentRequest);
 

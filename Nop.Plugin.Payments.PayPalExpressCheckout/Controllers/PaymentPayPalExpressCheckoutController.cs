@@ -11,7 +11,9 @@ using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Models;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Services;
+using Nop.Services.Catalog;
 using Nop.Services.Configuration;
+using Nop.Services.Customers;
 using Nop.Services.Orders;
 using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
@@ -24,12 +26,14 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
         #region Fields
 
         private readonly CustomerSettings _customerSettings;
+        private readonly ICustomerService _customerService;
         private readonly IPayPalExpressCheckoutConfirmOrderService _payPalExpressCheckoutConfirmOrderService;
         private readonly IPayPalExpressCheckoutPlaceOrderService _payPalExpressCheckoutPlaceOrderService;
         private readonly IPayPalExpressCheckoutService _payPalExpressCheckoutService;
         private readonly IPayPalExpressCheckoutShippingMethodService _payPalExpressCheckoutShippingMethodService;
         private readonly IPayPalIPNService _payPalIPNService;
         private readonly IPayPalRedirectionService _payPalRedirectionService;
+        private readonly IProductService _productService;
         private readonly ISettingService _settingService;
         private readonly IShoppingCartService _shoppingCartService;
         private readonly IWorkContext _workContext;
@@ -41,12 +45,14 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
         #region Ctor
 
         public PaymentPayPalExpressCheckoutController(CustomerSettings customerSettings,
+            ICustomerService customerService,
             IPayPalExpressCheckoutConfirmOrderService payPalExpressCheckoutConfirmOrderService,
             IPayPalExpressCheckoutPlaceOrderService payPalExpressCheckoutPlaceOrderService,
             IPayPalExpressCheckoutService payPalExpressCheckoutService,
             IPayPalExpressCheckoutShippingMethodService payPalExpressCheckoutShippingMethodService,
             IPayPalIPNService payPalIPNService,
             IPayPalRedirectionService payPalRedirectionService,
+            IProductService productService,
             ISettingService settingService,
             IShoppingCartService shoppingCartService,
             IWorkContext workContext,
@@ -54,12 +60,14 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings)
         {
             _customerSettings = customerSettings;
+            _customerService = customerService;
             _payPalExpressCheckoutConfirmOrderService = payPalExpressCheckoutConfirmOrderService;
             _payPalExpressCheckoutPlaceOrderService = payPalExpressCheckoutPlaceOrderService;
             _payPalExpressCheckoutService = payPalExpressCheckoutService;
             _payPalExpressCheckoutShippingMethodService = payPalExpressCheckoutShippingMethodService;
             _payPalIPNService = payPalIPNService;
             _payPalRedirectionService = payPalRedirectionService;
+            _productService = productService;
             _settingService = settingService;
             _shoppingCartService = shoppingCartService;
             _workContext = workContext;
@@ -89,7 +97,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
                 return false;
             }
 
-            if (result.Scheme != "https")
+            if (result.Scheme != Uri.UriSchemeHttps)
             {
                 validationErrors.Add("Logo Image must be hosted on https");
                 return false;
@@ -97,15 +105,14 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
 
             try
             {
-                using (var imageStream = WebRequest.Create(result).GetResponse().GetResponseStream())
-                using (var bitmap = new Bitmap(imageStream))
-                {
-                    if (bitmap.Width > 190)
-                        validationErrors.Add("Image must be less than or equal to 190 px in width");
-                    if (bitmap.Height > 60)
-                        validationErrors.Add("Image must be less than or equal to 60 px in height");
-                    return !validationErrors.Any();
-                }
+                using var imageStream = WebRequest.Create(result).GetResponse().GetResponseStream();
+                using var bitmap = new Bitmap(imageStream);
+
+                if (bitmap.Width > 190)
+                    validationErrors.Add("Image must be less than or equal to 190 px in width");
+                if (bitmap.Height > 60)
+                    validationErrors.Add("Image must be less than or equal to 60 px in height");
+                return !validationErrors.Any();
             }
             catch
             {
@@ -140,7 +147,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
                 LocaleOptions = _payPalExpressCheckoutService.GetLocaleCodeOptions(_payPalExpressCheckoutPaymentSettings.LocaleCode)
             };
 
-            return View("~/Plugins/Payments.PayPalExpressCheckout/Views/Configure.cshtml", model);
+            return View(Defaults.CONFIGURATION_VIEW_PATH, model);
         }
 
         [HttpPost]
@@ -179,9 +186,9 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             model.PaymentActionOptions = _payPalExpressCheckoutService.GetPaymentActionOptions(model.PaymentAction);
             model.LocaleOptions = _payPalExpressCheckoutService.GetLocaleCodeOptions(model.LocaleCode);
 
-            return View("~/Plugins/Payments.PayPalExpressCheckout/Views/Configure.cshtml", model);
+            return View(Defaults.CONFIGURATION_VIEW_PATH, model);
         }
-       
+
         public ActionResult SubmitButton()
         {
             var cart = _payPalExpressCheckoutService.GetCart();
@@ -189,10 +196,13 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             if (!cart.Any())
                 return RedirectToRoute("ShoppingCart");
 
-            var downloadableProductsRequireRegistration =
-                _customerSettings.RequireRegistrationForDownloadableProducts && cart.Any(sci => sci.Product.IsDownload);
+            var cartProductIds = cart.Select(ci => ci.ProductId).ToArray();
 
-            if (_workContext.CurrentCustomer.IsGuest() && (!_orderSettings.AnonymousCheckoutAllowed || downloadableProductsRequireRegistration))
+            var downloadableProductsRequireRegistration =
+                _customerSettings.RequireRegistrationForDownloadableProducts && _productService.HasAnyDownloadableProduct(cartProductIds);
+
+            if (_customerService.IsGuest(_workContext.CurrentCustomer) &&
+                (!_orderSettings.AnonymousCheckoutAllowed || downloadableProductsRequireRegistration))
                 return Challenge();
 
             return Redirect(_payPalRedirectionService.ProcessSubmitButton(cart, TempData));
@@ -255,7 +265,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             //model
             var model = _payPalExpressCheckoutConfirmOrderService.PrepareConfirmOrderModel(cart);
 
-            return View("~/Plugins/Payments.PayPalExpressCheckout/Views/Confirm.cshtml", model);
+            return View(Defaults.CONFIRM_VIEW_PATH, model);
         }
 
         [HttpPost, ActionName("Confirm")]
@@ -281,7 +291,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
                 return RedirectToRoute("CheckoutCompleted", new { orderId = checkoutPlaceOrderModel.CompletedId });
 
             //if we got this far, something failed, redisplay form
-            return View("~/Plugins/Payments.PayPalExpressCheckout/Views/Confirm.cshtml", checkoutPlaceOrderModel);
+            return View(Defaults.CONFIRM_VIEW_PATH, checkoutPlaceOrderModel);
         }
 
         public IActionResult IPNHandler()

@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Helpers;
 using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
+using Nop.Services.Catalog;
 using Nop.Services.Payments;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
@@ -10,39 +12,41 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
     public class PayPalRequestService : IPayPalRequestService
     {
         private readonly IPayPalUrlService _payPalUrlService;
-        private readonly IPayPalShippingService _payPalShippingService;
-        private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
         private readonly IPayPalOrderService _payPalOrderService;
         private readonly IPayPalCurrencyCodeParser _payPalCurrencyCodeParser;
         private readonly IPayPalRecurringPaymentsService _payPalRecurringPaymentsService;
+        private readonly IProductService _productService;
         private readonly IWorkContext _workContext;
+        private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
 
         public PayPalRequestService(IPayPalUrlService payPalUrlService,
-            IPayPalShippingService payPalShippingService,
-            PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings,
             IPayPalOrderService payPalOrderService,
             IPayPalCurrencyCodeParser payPalCurrencyCodeParser,
             IPayPalRecurringPaymentsService payPalRecurringPaymentsService,
-            IWorkContext workContext)
+            IProductService productService,
+            IWorkContext workContext,
+            PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings)
         {
             _payPalUrlService = payPalUrlService;
-            _payPalShippingService = payPalShippingService;
-            _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
             _payPalOrderService = payPalOrderService;
             _payPalCurrencyCodeParser = payPalCurrencyCodeParser;
             _payPalRecurringPaymentsService = payPalRecurringPaymentsService;
+            _productService = productService;
             _workContext = workContext;
+            _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
         }
 
         public SetExpressCheckoutRequestDetailsType GetSetExpressCheckoutRequestDetails(IList<ShoppingCartItem> cart)
         {
+            var noShippingCart = cart.Any(item => _productService.GetProductById(item.ProductId)?.IsDownload != true);
+
             var setExpressCheckoutRequestDetailsType =
                 new SetExpressCheckoutRequestDetailsType
                 {
                     ReturnURL = _payPalUrlService.GetReturnURL(),
                     CancelURL = _payPalUrlService.GetCancelURL(),
-                    ReqConfirmShipping = _payPalShippingService.GetRequireConfirmedShippingAddress(cart),
-                    NoShipping = _payPalShippingService.GetNoShipping(cart),
+                    ReqConfirmShipping = noShippingCart || !_payPalExpressCheckoutPaymentSettings.RequireConfirmedShippingAddress ? "0" : "1",
+                    NoShipping = noShippingCart ? "2" : "1",
                     LocaleCode = _payPalExpressCheckoutPaymentSettings.LocaleCode,
                     cppheaderimage = _payPalExpressCheckoutPaymentSettings.LogoImageURL,
                     cppcartbordercolor = _payPalExpressCheckoutPaymentSettings.CartBorderColor,
@@ -87,7 +91,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         {
             // populate payment details
             var currencyCodeType = _payPalCurrencyCodeParser.GetCurrencyCodeType(_workContext.WorkingCurrency);
-            
+
             var paymentDetails = new PaymentDetailsType
             {
                 OrderTotal = processPaymentRequest.OrderTotal.GetBasicAmountType(currencyCodeType),
@@ -95,7 +99,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 ButtonSource = PayPalHelper.BnCode,
                 InvoiceID = processPaymentRequest.OrderGuid.ToString()
             };
-            
+
             // build the request
             return new DoExpressCheckoutPaymentReq
             {

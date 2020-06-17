@@ -2,7 +2,6 @@
     Layout = "_ConfigurePlugin";
 }
 @model ConfigurationModel
-@using Nop.Plugin.Payments.PayPalExpressCheckout.Models;
 
 <form asp-controller="PaymentPayPalExpressCheckout" asp-action="Configure" method="post">
     @Html.ValidationSummary()
@@ -108,7 +107,7 @@
                         <nop-label asp-for="LocaleCode" />
                     </div>
                     <div class="col-md-9">
-                        <nop-select asp-for="LocaleCode" asp-items="Model.LocaleOptions"/>
+                        <nop-select asp-for="LocaleCode" asp-items="Model.LocaleOptions" />
                         <span asp-validation-for="LocaleOptions"></span>
                     </div>
                 </div>
@@ -126,7 +125,7 @@
                         <nop-label asp-for="PaymentAction" />
                     </div>
                     <div class="col-md-9">
-                        <nop-select asp-for="PaymentAction" asp-items="Model.PaymentActionOptions"/>
+                        <nop-select asp-for="PaymentAction" asp-items="Model.PaymentActionOptions" />
                         <span asp-validation-for="PaymentAction"></span>
                     </div>
                 </div>

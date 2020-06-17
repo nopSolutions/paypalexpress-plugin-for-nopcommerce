@@ -13,32 +13,36 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
     public class PayPalOrderService : IPayPalOrderService
     {
-        private readonly IWorkContext _workContext;
-        private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
+        private readonly IAddressService _addressService;
         private readonly IPayPalCurrencyCodeParser _payPalCurrencyCodeParser;
         private readonly IPayPalCartItemService _payPalCartItemService;
         private readonly IShippingService _shippingService;
         private readonly IGenericAttributeService _genericAttributeService;
         private readonly IStoreContext _storeContext;
         private readonly ICheckoutAttributeParser _checkoutAttributeParser;
+        private readonly IWorkContext _workContext;
+        private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
 
-        public PayPalOrderService(IWorkContext workContext,
-            PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings,
+        public PayPalOrderService(
+            IAddressService addressService,
             IPayPalCurrencyCodeParser payPalCurrencyCodeParser,
             IPayPalCartItemService payPalCartItemService,
             IShippingService shippingService,
             IGenericAttributeService genericAttributeService,
             IStoreContext storeContext,
-            ICheckoutAttributeParser checkoutAttributeParser)
+            ICheckoutAttributeParser checkoutAttributeParser,
+            IWorkContext workContext,
+            PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings)
         {
-            _workContext = workContext;
-            _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
+            _addressService = addressService;
             _payPalCurrencyCodeParser = payPalCurrencyCodeParser;
             _payPalCartItemService = payPalCartItemService;
             _shippingService = shippingService;
             _genericAttributeService = genericAttributeService;
             _storeContext = storeContext;
             _checkoutAttributeParser = checkoutAttributeParser;
+            _workContext = workContext;
+            _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
         }
 
         public PaymentDetailsType[] GetPaymentDetails(IList<ShoppingCartItem> cart)
@@ -66,22 +70,22 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             var items = GetPaymentDetailsItems(cart);
 
             // checkout attributes
-            var customer = _workContext.CurrentCustomer;
-            if (customer != null)
+            if (_workContext.CurrentCustomer is Customer customer)
             {
                 var checkoutAttributesXml = _genericAttributeService.GetAttribute<string>(customer, NopCustomerDefaults.CheckoutAttributes, _storeContext.CurrentStore.Id);
                 var caValues = _checkoutAttributeParser.ParseCheckoutAttributeValues(checkoutAttributesXml);
-                if (caValues != null)
+
+                foreach (var (attribute, values) in caValues)
                 {
-                    foreach (var caValue in caValues)
+                    foreach (var attributeValue in values)
                     {
-                        if (caValue.PriceAdjustment <= 0) 
+                        if (attributeValue.PriceAdjustment <= 0)
                             continue;
 
                         var checkoutAttrItem = new PaymentDetailsItemType
                         {
-                            Name = caValue.Name,
-                            Amount = caValue.PriceAdjustment.GetBasicAmountType(currencyCode),
+                            Name = attributeValue.Name,
+                            Amount = attributeValue.PriceAdjustment.GetBasicAmountType(currencyCode),
                             Quantity = "1"
                         };
 
@@ -132,7 +136,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
         public BasicAmountType GetMaxAmount(IList<ShoppingCartItem> cart)
         {
-            var getShippingOptionResponse = _shippingService.GetShippingOptions(cart, _workContext.CurrentCustomer.ShippingAddress);
+            var getShippingOptionResponse = _shippingService.GetShippingOptions(cart, _addressService.GetAddressById(_workContext.CurrentCustomer.ShippingAddressId ?? 0));
             decimal toAdd = 0;
 
             if (getShippingOptionResponse.ShippingOptions != null && getShippingOptionResponse.ShippingOptions.Any())

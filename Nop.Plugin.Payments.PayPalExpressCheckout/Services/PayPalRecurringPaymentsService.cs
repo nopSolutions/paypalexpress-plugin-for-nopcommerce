@@ -4,7 +4,9 @@ using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Directory;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Helpers;
 using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
+using Nop.Services.Common;
 using Nop.Services.Customers;
+using Nop.Services.Directory;
 using Nop.Services.Payments;
 using Nop.Services.Stores;
 
@@ -12,19 +14,28 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
     public class PayPalRecurringPaymentsService : IPayPalRecurringPaymentsService
     {
+        private readonly IAddressService _addressService;
+        private readonly ICountryService _countryService;
         private readonly ICustomerService _customerService;
-        private readonly IStoreService _storeService;
         private readonly IPayPalCurrencyCodeParser _payPalCurrencyCodeParser;
+        private readonly IStateProvinceService _stateProvinceService;
+        private readonly IStoreService _storeService;
         private readonly IWorkContext _workContext;
 
-        public PayPalRecurringPaymentsService(ICustomerService customerService,
-            IStoreService storeService,
+        public PayPalRecurringPaymentsService(IAddressService addressService,
+            ICountryService countryService,
+            ICustomerService customerService,
             IPayPalCurrencyCodeParser payPalCurrencyCodeParser,
+            IStoreService storeService,
+            IStateProvinceService stateProvinceService,
             IWorkContext workContext)
         {
+            _addressService = addressService;
+            _countryService = countryService;
             _customerService = customerService;
-            _storeService = storeService;
             _payPalCurrencyCodeParser = payPalCurrencyCodeParser;
+            _stateProvinceService = stateProvinceService;
+            _storeService = storeService;
             _workContext = workContext;
         }
 
@@ -37,6 +48,17 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             };
 
             var customer = _customerService.GetCustomerById(processPaymentRequest.CustomerId);
+
+            if (customer is null)
+                throw new NopException("Customer is not found");
+
+            if ((customer.BillingAddressId ?? 0) == 0)
+                throw new NopException("Customer doesn't have a billing address");
+
+            var billingAddress = _addressService.GetAddressById(customer.BillingAddressId.Value);
+
+            var country = _countryService.GetCountryByAddress(billingAddress);
+
             details.CreditCard = new CreditCardDetailsType
             {
                 CreditCardNumber = processPaymentRequest.CreditCardNumber,
@@ -48,28 +70,28 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 CVV2 = processPaymentRequest.CreditCardCvv2,
                 CardOwner = new PayerInfoType
                 {
-                    PayerCountry = GetPaypalCountryCodeType(customer.BillingAddress.Country)
+                    PayerCountry = GetPaypalCountryCodeType(country)
                 },
                 CreditCardTypeSpecified = true
             };
 
+
+
             details.CreditCard.CardOwner.Address = new AddressType
             {
                 CountrySpecified = true,
-                Street1 = customer.BillingAddress.Address1,
-                Street2 = customer.BillingAddress.Address2,
-                CityName = customer.BillingAddress.City,
-                StateOrProvince = customer.BillingAddress.StateProvince != null
-                    ? customer.BillingAddress.StateProvince.Abbreviation
-                    : "CA",
-                Country = GetPaypalCountryCodeType(customer.BillingAddress.Country),
-                PostalCode = customer.BillingAddress.ZipPostalCode
+                Street1 = billingAddress.Address1,
+                Street2 = billingAddress.Address2,
+                CityName = billingAddress.City,
+                StateOrProvince = _stateProvinceService.GetStateProvinceByAddress(billingAddress)?.Abbreviation ?? "CA",
+                Country = GetPaypalCountryCodeType(country),
+                PostalCode = billingAddress.ZipPostalCode
             };
-            details.CreditCard.CardOwner.Payer = customer.BillingAddress.Email;
+            details.CreditCard.CardOwner.Payer = billingAddress.Email;
             details.CreditCard.CardOwner.PayerName = new PersonNameType
             {
-                FirstName = customer.BillingAddress.FirstName,
-                LastName = customer.BillingAddress.LastName
+                FirstName = billingAddress.FirstName,
+                LastName = billingAddress.LastName
             };
 
             //start date
@@ -91,24 +113,14 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 BillingFrequency = processPaymentRequest.RecurringCycleLength
             };
 
-            switch (processPaymentRequest.RecurringCyclePeriod)
+            details.ScheduleDetails.PaymentPeriod.BillingPeriod = processPaymentRequest.RecurringCyclePeriod switch
             {
-                case RecurringProductCyclePeriod.Days:
-                    details.ScheduleDetails.PaymentPeriod.BillingPeriod = BillingPeriodType.Day;
-                    break;
-                case RecurringProductCyclePeriod.Weeks:
-                    details.ScheduleDetails.PaymentPeriod.BillingPeriod = BillingPeriodType.Week;
-                    break;
-                case RecurringProductCyclePeriod.Months:
-                    details.ScheduleDetails.PaymentPeriod.BillingPeriod = BillingPeriodType.Month;
-                    break;
-                case RecurringProductCyclePeriod.Years:
-                    details.ScheduleDetails.PaymentPeriod.BillingPeriod = BillingPeriodType.Year;
-                    break;
-                default:
-                    throw new NopException("Not supported cycle period");
-            }
-
+                RecurringProductCyclePeriod.Days => BillingPeriodType.Day,
+                RecurringProductCyclePeriod.Weeks => BillingPeriodType.Week,
+                RecurringProductCyclePeriod.Months => BillingPeriodType.Month,
+                RecurringProductCyclePeriod.Years => BillingPeriodType.Year,
+                _ => throw new NopException("Not supported cycle period"),
+            };
             details.ScheduleDetails.PaymentPeriod.TotalBillingCycles = processPaymentRequest.RecurringTotalCycles;
             details.ScheduleDetails.PaymentPeriod.TotalBillingCyclesSpecified = true;
 
@@ -117,6 +129,9 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
         protected CountryCodeType GetPaypalCountryCodeType(Country country)
         {
+            if (country is null)
+                throw new ArgumentException(nameof(country));
+
             Enum.TryParse(country.TwoLetterIsoCode, out CountryCodeType payerCountry);
 
             return payerCountry;

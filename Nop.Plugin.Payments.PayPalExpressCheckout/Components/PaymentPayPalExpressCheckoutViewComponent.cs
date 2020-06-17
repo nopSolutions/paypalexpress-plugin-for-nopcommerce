@@ -3,6 +3,7 @@ using Nop.Core;
 using Nop.Core.Domain.Common;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Models;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Services;
+using Nop.Services.Common;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
 using Nop.Web.Framework.Components;
@@ -13,18 +14,21 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Components
     public class PaymentPayPalExpressCheckoutViewComponent : NopViewComponent
     {
         private readonly AddressSettings _addressSettings;
+        private readonly IAddressService _addressService;
         private readonly IOrderProcessingService _orderProcessingService;
         private readonly IPaymentPluginManager _paymentPluginManager;
         private readonly IPayPalExpressCheckoutService _payPalExpressCheckoutService;
         private readonly IWorkContext _workContext;
 
         public PaymentPayPalExpressCheckoutViewComponent(AddressSettings addressSettings,
+            IAddressService addressService,
             IOrderProcessingService orderProcessingService,
             IPaymentPluginManager paymentPluginManager,
             IPayPalExpressCheckoutService payPalExpressCheckoutService,
             IWorkContext workContext)
         {
             _addressSettings = addressSettings;
+            _addressService = addressService;
             _orderProcessingService = orderProcessingService;
             _paymentPluginManager = paymentPluginManager;
             _payPalExpressCheckoutService = payPalExpressCheckoutService;
@@ -37,13 +41,14 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Components
             if (cart.Count == 0)
                 return Content(string.Empty);
 
-            var minOrderSubtotalAmountOk = _orderProcessingService.ValidateMinOrderSubtotalAmount(cart);
-            if (!minOrderSubtotalAmountOk)
+            if (!_orderProcessingService.ValidateMinOrderSubtotalAmount(cart))
                 return Content(string.Empty);
-            
+
             var filterByCountryId = 0;
-            if (_addressSettings.CountryEnabled && _workContext.CurrentCustomer.BillingAddress?.Country != null)
-                filterByCountryId = _workContext.CurrentCustomer.BillingAddress.Country.Id;
+            var billingAddress = _addressService.GetAddressById(_workContext.CurrentCustomer.BillingAddressId ?? 0);
+
+            if (_addressSettings.CountryEnabled && billingAddress?.CountryId != null)
+                filterByCountryId = billingAddress.CountryId.Value;
 
             var plugin = _paymentPluginManager.LoadPluginBySystemName("Payments.PayPalExpressCheckout");
 
@@ -52,7 +57,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Components
 
             var model = new PaymentInfoModel
             {
-                ButtonImageLocation = "https://paypalobjects.com/en_GB/i/btn/btn_xpressCheckout.gif"
+                ButtonImageLocation = Defaults.CHECKOUT_BUTTON_IMAGE_URL
             };
 
             return View("~/Plugins/Payments.PayPalExpressCheckout/Views/PaymentInfo.cshtml", model);

@@ -1,6 +1,4 @@
-﻿@model Nop.Plugin.Payments.PayPalExpressCheckout.Models.CheckoutConfirmModel
-@using Nop.Web.Framework
-@using Nop.Web.Framework.UI
+﻿@model CheckoutConfirmModel
 @{
     Layout = "~/Views/Shared/_ColumnsOne.cshtml";
 
@@ -12,28 +10,27 @@
         <h1>@T("Checkout.ConfirmYourOrder")</h1>
     </div>
     <div class="page-body checkout-data">
-        @await Component.InvokeAsync("Widget", new { widgetZone = "checkout_confirm_top" })
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.CheckoutConfirmTop })
         <div class="section confirm-order">
-            @using (Html.BeginRouteForm("Plugin.Payments.PayPalExpressCheckout.Confirm", FormMethod.Post, new {id = "confirm-order-form"}))
-            {
+            <form asp-controller="PaymentPayPalExpressCheckout" asp-action="Confirm" method="post" id="confirm-order-form">
                 <script type="text/javascript">
-                    $(document).ready(function() {
-                        $('#confirm-order-form').submit(function() {
+                    $(document).ready(function () {
+                        $('#confirm-order-form').submit(function () {
                             $('input[type=submit]', this).attr('disabled', 'disabled');
                         });
                     });
                 </script>
-                if (!string.IsNullOrEmpty(Model.MinOrderTotalWarning))
+                @if (!string.IsNullOrEmpty(Model.MinOrderTotalWarning))
                 {
                     <span class="min-order-warning">@Model.MinOrderTotalWarning</span>
                 }
                 else
                 {
                     <div class="buttons">
-                        <input type="submit" name="nextstep" value="@T("Checkout.ConfirmButton")" class="button-1 confirm-order-next-step-button"/>
+                        <input type="submit" name="nextstep" value="@T("Checkout.ConfirmButton")" class="button-1 confirm-order-next-step-button" />
                     </div>
                 }
-                if (Model.Warnings.Count > 0)
+                @if (Model.Warnings.Count > 0)
                 {
                     <div class="message-error">
                         <ul>
@@ -44,11 +41,11 @@
                         </ul>
                     </div>
                 }
-            }
+            </form>
         </div>
-        @await Component.InvokeAsync("Widget", new { widgetZone = "checkout_confirm_bottom" })
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.CheckoutConfirmBottom })
         <div class="order-summary-body">
-            @await Component.InvokeAsync("OrderSummary", new {prepareAndDisplayOrderReviewData = true})
+            @await Component.InvokeAsync("OrderSummary", new { prepareAndDisplayOrderReviewData = true })
         </div>
     </div>
 </div>

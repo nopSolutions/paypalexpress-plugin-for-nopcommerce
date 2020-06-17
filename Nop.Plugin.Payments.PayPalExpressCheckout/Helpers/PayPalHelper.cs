@@ -43,7 +43,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
         }
 
         public static void LogResponse<T>(this T response, Guid orderGuid)
-             where T : AbstractResponseType
+            where T : AbstractResponseType
         {
             var chunks = GetMessage(response);
 
@@ -52,7 +52,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
         }
 
         public static void LogOrderNotes<T>(this T response, Guid orderGuid)
-             where T : AbstractResponseType
+            where T : AbstractResponseType
         {
             var chunks = GetMessage(response);
 
@@ -69,12 +69,12 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
                 var message = new string(chunk.ToArray());
                 var intro = $"{response.GetType().Name} returned - Part {index + 1} of {chunks.Count}";
 
-                if (order == null) 
+                if (order == null)
                     continue;
 
-                order.OrderNotes.Add(new OrderNote
+                orderService.InsertOrderNote(new OrderNote
                 {
-                    Order = order,
+                    OrderId = order.Id,
                     DisplayToCustomer = false,
                     Note = intro + " - " + message,
                     CreatedOnUtc = DateTime.UtcNow
@@ -92,7 +92,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
                 var message = new string(chunk.ToArray());
                 var intro = $"{response.GetType().Name} returned - Part {index + 1} of {chunks.Count}";
 
-                if (!EngineContext.Current.Resolve<PayPalExpressCheckoutPaymentSettings>().EnableDebugLogging) 
+                if (!EngineContext.Current.Resolve<PayPalExpressCheckoutPaymentSettings>().EnableDebugLogging)
                     continue;
 
                 var logger = EngineContext.Current.Resolve<ILogger>();
@@ -145,7 +145,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
             var currencyService = EngineContext.Current.Resolve<ICurrencyService>();
             var workContext = EngineContext.Current.Resolve<IWorkContext>();
             var valueInCustomerCurrency = currencyService.ConvertCurrency(value, workContext.WorkingCurrency.Rate);
-            
+
             return new BasicAmountType
             {
                 currencyID = currency,

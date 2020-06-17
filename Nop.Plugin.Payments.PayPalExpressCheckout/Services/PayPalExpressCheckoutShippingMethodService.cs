@@ -17,6 +17,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
     public class PayPalExpressCheckoutShippingMethodService : IPayPalExpressCheckoutShippingMethodService
     {
+        private readonly IAddressService _addressService;
         private readonly IShippingService _shippingService;
         private readonly IWorkContext _workContext;
         private readonly IGenericAttributeService _genericAttributeService;
@@ -27,6 +28,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         private readonly IPriceFormatter _priceFormatter;
 
         public PayPalExpressCheckoutShippingMethodService(
+            IAddressService addressService,
             IShippingService shippingService,
             IWorkContext workContext,
             IGenericAttributeService genericAttributeService,
@@ -36,6 +38,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             ICurrencyService currencyService,
             IPriceFormatter priceFormatter)
         {
+            _addressService = addressService;
             _shippingService = shippingService;
             _workContext = workContext;
             _genericAttributeService = genericAttributeService;
@@ -50,7 +53,10 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         {
             var model = new CheckoutShippingMethodModel();
 
-            var getShippingOptionResponse = _shippingService.GetShippingOptions(cart, _workContext.CurrentCustomer.ShippingAddress);
+            var shippingAddress = _addressService.GetAddressById(_workContext.CurrentCustomer.ShippingAddressId ?? 0);
+
+            var getShippingOptionResponse = _shippingService.GetShippingOptions(cart, shippingAddress);
+
             if (getShippingOptionResponse.Success)
             {
                 //performance optimization. cache returned shipping options.
@@ -97,9 +103,9 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 }
 
                 //if no option has been selected, let's do it for the first one
-                if (model.ShippingMethods.FirstOrDefault(so => so.Selected) != null) 
+                if (model.ShippingMethods.FirstOrDefault(so => so.Selected) != null)
                     return model;
-               
+
                 shippingOptionToSelect = model.ShippingMethods.FirstOrDefault();
                 if (shippingOptionToSelect != null)
                     shippingOptionToSelect.Selected = true;
@@ -129,9 +135,11 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             var shippingOptions = _genericAttributeService.GetAttribute<List<ShippingOption>>(_workContext.CurrentCustomer, NopCustomerDefaults.OfferedShippingOptionsAttribute, _storeContext.CurrentStore.Id);
             if (shippingOptions == null || shippingOptions.Count == 0)
             {
+                var shippingAddress = _addressService.GetAddressById(_workContext.CurrentCustomer.ShippingAddressId ?? 0);
+
                 //not found? let's load them using shipping service
                 shippingOptions = _shippingService
-                    .GetShippingOptions(cart, _workContext.CurrentCustomer.ShippingAddress, 
+                    .GetShippingOptions(cart, shippingAddress,
                     allowedShippingRateComputationMethodSystemName: shippingRateComputationMethodSystemName)
                     .ShippingOptions
                     .ToList();
@@ -149,7 +157,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 return false;
 
             //save
-            _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer, 
+            _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer,
                 NopCustomerDefaults.SelectedShippingOptionAttribute, shippingOption, _storeContext.CurrentStore.Id);
 
             return true;

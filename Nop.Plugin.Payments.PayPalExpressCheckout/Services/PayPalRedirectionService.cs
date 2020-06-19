@@ -75,7 +75,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 {
                     _logger.InsertLog(LogLevel.Error, "Error passing cart to PayPal",
                         string.Join(", ", setExpressCheckoutResponse.Errors.Select(errorType => errorType.ErrorCode + ": " + errorType.LongMessage)));
-                    tempData["paypal-ec-error"] = "An error occurred setting up your cart for PayPal.";
+                    tempData[Defaults.CheckoutErrorMessageKey] = "An error occurred setting up your cart for PayPal.";
                     redirectUrl = _webHelper.GetUrlReferrer();
                 }, Guid.Empty);
 
@@ -100,7 +100,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             //set previous order GUID (if exists)
             GenerateOrderGuid(request);
 
-            _session.Set("OrderPaymentInfo", request);
+            _session.Set(Defaults.ProcessPaymentRequestKey, request);
 
             var customer = _customerService.GetCustomerById(request.CustomerId);
 
@@ -121,7 +121,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             //we should use the same GUID for multiple payment attempts
             //this way a payment gateway can prevent security issues such as credit card brute-force attacks
             //in order to avoid any possible limitations by payment gateway we reset GUID periodically
-            var previousPaymentRequest = _session.Get<ProcessPaymentRequest>("OrderPaymentInfo");
+            var previousPaymentRequest = _session.Get<ProcessPaymentRequest>(Defaults.ProcessPaymentRequestKey);
             if (_paymentSettings.RegenerateOrderGuidInterval > 0 &&
                 (previousPaymentRequest?.OrderGuidGeneratedOnUtc.HasValue ?? false))
             {

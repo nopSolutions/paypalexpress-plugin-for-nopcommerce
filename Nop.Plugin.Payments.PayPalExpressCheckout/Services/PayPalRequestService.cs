@@ -108,8 +108,8 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                     Version = GetVersion(),
                     DoExpressCheckoutPaymentRequestDetails = new DoExpressCheckoutPaymentRequestDetailsType
                     {
-                        Token = processPaymentRequest.CustomValues["PaypalToken"].ToString(),
-                        PayerID = processPaymentRequest.CustomValues["PaypalPayerId"].ToString(),
+                        Token = processPaymentRequest.CustomValues[Defaults.PaypalTokenKey].ToString(),
+                        PayerID = processPaymentRequest.CustomValues[Defaults.PaypalPayerIdKey].ToString(),
                         PaymentAction = _payPalExpressCheckoutPaymentSettings.PaymentAction,
                         PaymentActionSpecified = true,
                         ButtonSource = PayPalHelper.BnCode,

@@ -6,18 +6,33 @@
     public class Defaults
     {
         /// <summary>
-        /// Gets the configuration view path
+        /// Gets or sets PayPal button logo URL
         /// </summary>
-        public const string CONFIGURATION_VIEW_PATH = "~/Plugins/Payments.PayPalExpressCheckout/Views/Configure.cshtml";
+        public static string CheckoutButtonImageUrl = "https://www.paypalobjects.com/webstatic/en_US/i/buttons/checkout-logo-medium.png";
 
         /// <summary>
-        /// Gets the confirm view path
+        /// Gets or sets the key for a payment info holder entry
         /// </summary>
-        public const string CONFIRM_VIEW_PATH = "~/Plugins/Payments.PayPalExpressCheckout/Views/Confirm.cshtml";
+        public static string ProcessPaymentRequestKey = "OrderPaymentInfo";
 
         /// <summary>
-        /// PayPal button logo
+        ///  Gets or sets the key for CheckoutPaymentResponseType entry
         /// </summary>
-        public const string CHECKOUT_BUTTON_IMAGE_URL = "https://www.paypalobjects.com/webstatic/en_US/i/buttons/checkout-logo-medium.png";
+        public static string CheckoutPaymentResponseTypeKey = "express-checkout-response-type";
+
+        /// <summary>
+        /// Gets or sets the key for Express Checkout token
+        /// </summary>
+        public static string PaypalTokenKey = "PaypalToken";
+
+        /// <summary>
+        /// Gets or sets the key for an external unique identifier of a particular PayPal account
+        /// </summary>
+        public static string PaypalPayerIdKey = "PaypalPayerId";
+
+        /// <summary>
+        /// Gets or sets the key for an error occurred during the checkout process
+        /// </summary>
+        public static string CheckoutErrorMessageKey = "paypal-ec-error";
     }
 }

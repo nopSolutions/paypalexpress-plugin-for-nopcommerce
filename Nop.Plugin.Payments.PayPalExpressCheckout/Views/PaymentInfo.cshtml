@@ -1,12 +1,12 @@
 ﻿@model PaymentInfoModel
 
-@{ var error = TempData["paypal-ec-error"]; }
+@{ var error = TempData[Defaults.CheckoutErrorMessageKey]; }
 
 <img id="payPalExpressCheckoutImage" alt="" src="@Model.ButtonImageLocation" style="cursor:pointer;" />
 
 @if (error != null)
 {
-    <p class="error">@error</p>
+    <p class="message-error">@error</p>
 }
 <script asp-location="Footer">
         $(document).ready(function() {
@@ -19,6 +19,9 @@
                     } else {
                         setLocation('@Url.RouteUrl("Plugin.Payments.PayPalExpressCheckout.SubmitButton")');
                     }
+                }
+                else {
+                    setLocation('@Url.RouteUrl("Plugin.Payments.PayPalExpressCheckout.SubmitButton")');
                 }
             });
         });

@@ -7,4 +7,4 @@ Listing on nopCommerce "extensions and themes" catalog: [https://www.nopcommerce
 
 PayPal site: [https://www.paypal.com](https://www.paypal.com)
 
-PayPal Express: [https://developer.paypal.com/docs/classic/express-checkout/gs_expresscheckout/](Express Checkout API Getting Started Guide)
+PayPal Express: [Express Checkout API Getting Started Guide](https://developer.paypal.com/docs/archive/express-checkout/ec-integration/)

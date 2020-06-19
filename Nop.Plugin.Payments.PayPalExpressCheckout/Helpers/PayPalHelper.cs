@@ -31,8 +31,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
         public static T1 HandleResponse<T1, T2>(this T2 response, T1 result, Action<T1, T2> onSuccess, Action<T1, T2> onFailure, Guid orderGuid)
         where T2 : AbstractResponseType
         {
-            var success = response.Ack == AckCodeType.Success || response.Ack == AckCodeType.SuccessWithWarning;
-            if (success)
+            if (response.Ack == AckCodeType.Success || response.Ack == AckCodeType.SuccessWithWarning)
                 onSuccess(result, response);
             else
                 onFailure(result, response);

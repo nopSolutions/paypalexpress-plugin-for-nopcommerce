@@ -170,8 +170,8 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 CustomerId = customerId,
                 CustomValues =
                 {
-                    ["PaypalToken"] = checkoutDetails.Token,
-                    ["PaypalPayerId"] = checkoutDetails.PayerInfo.PayerID
+                    [Defaults.PaypalTokenKey] = checkoutDetails.Token,
+                    [Defaults.PaypalPayerIdKey] = checkoutDetails.PayerInfo.PayerID
                 }
             };
 

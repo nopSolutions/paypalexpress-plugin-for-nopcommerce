@@ -66,7 +66,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
             using var payPalApiaaInterfaceClient = _payPalInterfaceService.GetAAService();
             var doExpressCheckoutPaymentResponseType = payPalApiaaInterfaceClient.DoExpressCheckoutPayment(ref customSecurityHeaderType,
                 _payPalRequestService.GetDoExpressCheckoutPaymentRequest(processPaymentRequest));
-            _session.Set("express-checkout-response-type", doExpressCheckoutPaymentResponseType);
+            _session.Set(Defaults.CheckoutPaymentResponseTypeKey, doExpressCheckoutPaymentResponseType);
 
             return doExpressCheckoutPaymentResponseType.HandleResponse(new ProcessPaymentResult(),
             (paymentResult, type) =>
@@ -77,7 +77,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
                        : PaymentStatus.Paid;
 
                 paymentResult.AuthorizationTransactionId =
-                processPaymentRequest.CustomValues["PaypalToken"].ToString();
+                processPaymentRequest.CustomValues[Defaults.PaypalTokenKey].ToString();
                 var paymentInfoType = type.DoExpressCheckoutPaymentResponseDetails.PaymentInfo.FirstOrDefault();
 
                 if (paymentInfoType != null)

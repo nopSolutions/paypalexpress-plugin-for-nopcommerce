@@ -50,7 +50,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             var model = new CheckoutPlaceOrderModel();
             try
             {
-                var processPaymentRequest = _session.Get<ProcessPaymentRequest>("OrderPaymentInfo");
+                var processPaymentRequest = _session.Get<ProcessPaymentRequest>(Defaults.ProcessPaymentRequestKey);
 
                 if (processPaymentRequest == null)
                 {
@@ -70,9 +70,9 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
                 if (placeOrderResult.Success)
                 {
-                    var doExpressCheckoutPaymentResponseType = _session.Get<DoExpressCheckoutPaymentResponseType>("express-checkout-response-type");
+                    var doExpressCheckoutPaymentResponseType = _session.Get<DoExpressCheckoutPaymentResponseType>(Defaults.CheckoutPaymentResponseTypeKey);
                     doExpressCheckoutPaymentResponseType?.LogOrderNotes(placeOrderResult.PlacedOrder.OrderGuid);
-                    _session.Remove("OrderPaymentInfo");
+                    _session.Remove(Defaults.ProcessPaymentRequestKey);
                     var postProcessPaymentRequest = new PostProcessPaymentRequest
                     {
                         Order = placeOrderResult.PlacedOrder

@@ -12,6 +12,7 @@ using Nop.Core.Domain.Orders;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Models;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Services;
 using Nop.Services.Catalog;
+using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Orders;
@@ -21,12 +22,14 @@ using Nop.Web.Framework.Mvc.Filters;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
 {
+    [AutoValidateAntiforgeryToken]
     public class PaymentPayPalExpressCheckoutController : BasePaymentController
     {
         #region Fields
 
         private readonly CustomerSettings _customerSettings;
         private readonly ICustomerService _customerService;
+        private readonly IGenericAttributeService _genericAttributeService;
         private readonly IPayPalExpressCheckoutConfirmOrderService _payPalExpressCheckoutConfirmOrderService;
         private readonly IPayPalExpressCheckoutPlaceOrderService _payPalExpressCheckoutPlaceOrderService;
         private readonly IPayPalExpressCheckoutService _payPalExpressCheckoutService;
@@ -36,6 +39,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
         private readonly IProductService _productService;
         private readonly ISettingService _settingService;
         private readonly IShoppingCartService _shoppingCartService;
+        private readonly IStoreContext _storeContext;
         private readonly IWorkContext _workContext;
         private readonly OrderSettings _orderSettings;
         private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
@@ -46,6 +50,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
 
         public PaymentPayPalExpressCheckoutController(CustomerSettings customerSettings,
             ICustomerService customerService,
+            IGenericAttributeService genericAttributeService,
             IPayPalExpressCheckoutConfirmOrderService payPalExpressCheckoutConfirmOrderService,
             IPayPalExpressCheckoutPlaceOrderService payPalExpressCheckoutPlaceOrderService,
             IPayPalExpressCheckoutService payPalExpressCheckoutService,
@@ -55,12 +60,14 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             IProductService productService,
             ISettingService settingService,
             IShoppingCartService shoppingCartService,
+            IStoreContext storeContext,
             IWorkContext workContext,
             OrderSettings orderSettings,
             PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings)
         {
             _customerSettings = customerSettings;
             _customerService = customerService;
+            _genericAttributeService = genericAttributeService;
             _payPalExpressCheckoutConfirmOrderService = payPalExpressCheckoutConfirmOrderService;
             _payPalExpressCheckoutPlaceOrderService = payPalExpressCheckoutPlaceOrderService;
             _payPalExpressCheckoutService = payPalExpressCheckoutService;
@@ -70,6 +77,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             _productService = productService;
             _settingService = settingService;
             _shoppingCartService = shoppingCartService;
+            _storeContext = storeContext;
             _workContext = workContext;
             _orderSettings = orderSettings;
             _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
@@ -147,7 +155,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
                 LocaleOptions = _payPalExpressCheckoutService.GetLocaleCodeOptions(_payPalExpressCheckoutPaymentSettings.LocaleCode)
             };
 
-            return View(Defaults.CONFIGURATION_VIEW_PATH, model);
+            return View("~/Plugins/Payments.PayPalExpressCheckout/Views/Configure.cshtml", model);
         }
 
         [HttpPost]
@@ -186,7 +194,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             model.PaymentActionOptions = _payPalExpressCheckoutService.GetPaymentActionOptions(model.PaymentAction);
             model.LocaleOptions = _payPalExpressCheckoutService.GetLocaleCodeOptions(model.LocaleCode);
 
-            return View(Defaults.CONFIGURATION_VIEW_PATH, model);
+            return View("~/Plugins/Payments.PayPalExpressCheckout/Views/Configure.cshtml", model);
         }
 
         public ActionResult SubmitButton()
@@ -195,6 +203,16 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
 
             if (!cart.Any())
                 return RedirectToRoute("ShoppingCart");
+
+            var checkoutAttributesXml = _genericAttributeService.GetAttribute<string>(_workContext.CurrentCustomer,
+                NopCustomerDefaults.CheckoutAttributes, _storeContext.CurrentStore.Id);
+
+            var scWarnings = _shoppingCartService.GetShoppingCartWarnings(cart, checkoutAttributesXml, true);
+            if (scWarnings.Any())
+            {
+                TempData[Defaults.CheckoutErrorMessageKey] = string.Join("<br />", scWarnings);
+                return RedirectToRoute("ShoppingCart");
+            }
 
             var cartProductIds = cart.Select(ci => ci.ProductId).ToArray();
 
@@ -265,7 +283,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             //model
             var model = _payPalExpressCheckoutConfirmOrderService.PrepareConfirmOrderModel(cart);
 
-            return View(Defaults.CONFIRM_VIEW_PATH, model);
+            return View("~/Plugins/Payments.PayPalExpressCheckout/Views/Confirm.cshtml", model);
         }
 
         [HttpPost, ActionName("Confirm")]
@@ -291,7 +309,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
                 return RedirectToRoute("CheckoutCompleted", new { orderId = checkoutPlaceOrderModel.CompletedId });
 
             //if we got this far, something failed, redisplay form
-            return View(Defaults.CONFIRM_VIEW_PATH, checkoutPlaceOrderModel);
+            return View("~/Plugins/Payments.PayPalExpressCheckout/Views/Confirm.cshtml", checkoutPlaceOrderModel);
         }
 
         public IActionResult IPNHandler()

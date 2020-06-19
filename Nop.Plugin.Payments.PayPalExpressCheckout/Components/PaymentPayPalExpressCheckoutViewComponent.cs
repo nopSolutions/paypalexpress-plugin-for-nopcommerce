@@ -57,7 +57,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Components
 
             var model = new PaymentInfoModel
             {
-                ButtonImageLocation = Defaults.CHECKOUT_BUTTON_IMAGE_URL
+                ButtonImageLocation = Defaults.CheckoutButtonImageUrl
             };
 
             return View("~/Plugins/Payments.PayPalExpressCheckout/Views/PaymentInfo.cshtml", model);

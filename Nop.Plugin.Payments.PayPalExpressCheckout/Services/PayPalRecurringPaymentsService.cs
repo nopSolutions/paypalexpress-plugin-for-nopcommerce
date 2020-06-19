@@ -44,7 +44,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         {
             var details = new CreateRecurringPaymentsProfileRequestDetailsType
             {
-                Token = processPaymentRequest.CustomValues["PaypalToken"].ToString()
+                Token = processPaymentRequest.CustomValues[Defaults.PaypalTokenKey].ToString()
             };
 
             var customer = _customerService.GetCustomerById(processPaymentRequest.CustomerId);

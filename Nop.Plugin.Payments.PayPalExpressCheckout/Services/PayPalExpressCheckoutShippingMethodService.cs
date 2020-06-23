@@ -15,7 +15,7 @@ using Nop.Services.Tax;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
-    public class PayPalExpressCheckoutShippingMethodService : IPayPalExpressCheckoutShippingMethodService
+    public class PayPalExpressCheckoutShippingMethodService
     {
         private readonly IAddressService _addressService;
         private readonly IShippingService _shippingService;

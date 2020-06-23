@@ -12,10 +12,9 @@ using Nop.Services.Payments;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
-    public class PayPalExpressCheckoutPlaceOrderService : IPayPalExpressCheckoutPlaceOrderService
+    public class PayPalExpressCheckoutPlaceOrderService
     {
         private readonly ISession _session;
-        private readonly IPayPalExpressCheckoutService _payPalExpressCheckoutService;
         private readonly IWorkContext _workContext;
         private readonly ILocalizationService _localizationService;
         private readonly IStoreContext _storeContext;
@@ -23,19 +22,19 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         private readonly IPaymentService _paymentService;
         private readonly IWebHelper _webHelper;
         private readonly ILogger _logger;
+        private readonly PayPalExpressCheckoutService _payPalExpressCheckoutService;
 
         public PayPalExpressCheckoutPlaceOrderService(IHttpContextAccessor httpContextAccessor,
-            IPayPalExpressCheckoutService payPalExpressCheckoutService,
             IWorkContext workContext,
             ILocalizationService localizationService,
             IStoreContext storeContext,
             IOrderProcessingService orderProcessingService,
             IPaymentService paymentService,
             IWebHelper webHelper,
-            ILogger logger)
+            ILogger logger,
+            PayPalExpressCheckoutService payPalExpressCheckoutService)
         {
             _session = httpContextAccessor.HttpContext.Session;
-            _payPalExpressCheckoutService = payPalExpressCheckoutService;
             _workContext = workContext;
             _localizationService = localizationService;
             _storeContext = storeContext;
@@ -43,6 +42,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             _paymentService = paymentService;
             _webHelper = webHelper;
             _logger = logger;
+            _payPalExpressCheckoutService = payPalExpressCheckoutService;
         }
 
         public CheckoutPlaceOrderModel PlaceOrder()

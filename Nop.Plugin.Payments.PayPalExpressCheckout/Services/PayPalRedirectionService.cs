@@ -16,43 +16,43 @@ using Nop.Services.Payments;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
-    public class PayPalRedirectionService : IPayPalRedirectionService
+    public class PayPalRedirectionService
     {
-        private readonly IPayPalInterfaceService _payPalInterfaceService;
-        private readonly IPayPalSecurityService _payPalSecurityService;
-        private readonly IPayPalRequestService _payPalRequestService;
-        private readonly IPayPalUrlService _payPalUrlService;
         private readonly ILogger _logger;
         private readonly IWebHelper _webHelper;
-        private readonly IPayPalCheckoutDetailsService _payPalCheckoutDetailsService;
         private readonly IWorkContext _workContext;
         private readonly ICustomerService _customerService;
         private readonly ISession _session;
         private readonly PaymentSettings _paymentSettings;
+        private readonly PayPalCheckoutDetailsService _payPalCheckoutDetailsService;
+        private readonly PayPalInterfaceService _payPalInterfaceService;
+        private readonly PayPalSecurityService _payPalSecurityService;
+        private readonly PayPalRequestService _payPalRequestService;
+        private readonly PayPalUrlService _payPalUrlService;
 
-        public PayPalRedirectionService(IPayPalInterfaceService payPalInterfaceService,
-            IPayPalSecurityService payPalSecurityService,
-            IPayPalRequestService payPalRequestService,
-            IPayPalUrlService payPalUrlService,
-            ILogger logger,
+        public PayPalRedirectionService(ILogger logger,
             IWebHelper webHelper,
-            IPayPalCheckoutDetailsService payPalCheckoutDetailsService,
             IWorkContext workContext,
             ICustomerService customerService,
             IHttpContextAccessor httpContextAccessor,
-            PaymentSettings paymentSettings)
+            PaymentSettings paymentSettings,
+            PayPalCheckoutDetailsService payPalCheckoutDetailsService,
+            PayPalInterfaceService payPalInterfaceService,
+            PayPalSecurityService payPalSecurityService,
+            PayPalRequestService payPalRequestService,
+            PayPalUrlService payPalUrlService)
         {
-            _payPalInterfaceService = payPalInterfaceService;
-            _payPalSecurityService = payPalSecurityService;
-            _payPalRequestService = payPalRequestService;
-            _payPalUrlService = payPalUrlService;
             _logger = logger;
             _webHelper = webHelper;
-            _payPalCheckoutDetailsService = payPalCheckoutDetailsService;
             _workContext = workContext;
             _customerService = customerService;
             _session = httpContextAccessor.HttpContext.Session;
             _paymentSettings = paymentSettings;
+            _payPalCheckoutDetailsService = payPalCheckoutDetailsService;
+            _payPalInterfaceService = payPalInterfaceService;
+            _payPalSecurityService = payPalSecurityService;
+            _payPalRequestService = payPalRequestService;
+            _payPalUrlService = payPalUrlService;
         }
 
         public string ProcessSubmitButton(IList<ShoppingCartItem> cart, ITempDataDictionary tempData)

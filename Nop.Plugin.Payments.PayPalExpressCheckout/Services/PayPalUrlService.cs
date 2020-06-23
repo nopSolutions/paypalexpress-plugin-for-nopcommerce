@@ -3,7 +3,7 @@ using Nop.Core;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
-    public class PayPalUrlService : IPayPalUrlService
+    public class PayPalUrlService
     {
         private readonly IWebHelper _webHelper;
         private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;

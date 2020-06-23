@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
@@ -30,19 +31,19 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
         private readonly CustomerSettings _customerSettings;
         private readonly ICustomerService _customerService;
         private readonly IGenericAttributeService _genericAttributeService;
-        private readonly IPayPalExpressCheckoutConfirmOrderService _payPalExpressCheckoutConfirmOrderService;
-        private readonly IPayPalExpressCheckoutPlaceOrderService _payPalExpressCheckoutPlaceOrderService;
-        private readonly IPayPalExpressCheckoutService _payPalExpressCheckoutService;
-        private readonly IPayPalExpressCheckoutShippingMethodService _payPalExpressCheckoutShippingMethodService;
-        private readonly IPayPalIPNService _payPalIPNService;
-        private readonly IPayPalRedirectionService _payPalRedirectionService;
         private readonly IProductService _productService;
         private readonly ISettingService _settingService;
         private readonly IShoppingCartService _shoppingCartService;
         private readonly IStoreContext _storeContext;
         private readonly IWorkContext _workContext;
         private readonly OrderSettings _orderSettings;
+        private readonly PayPalExpressCheckoutConfirmOrderService _payPalExpressCheckoutConfirmOrderService;
         private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
+        private readonly PayPalExpressCheckoutPlaceOrderService _payPalExpressCheckoutPlaceOrderService;
+        private readonly PayPalExpressCheckoutService _payPalExpressCheckoutService;
+        private readonly PayPalExpressCheckoutShippingMethodService _payPalExpressCheckoutShippingMethodService;
+        private readonly PayPalIPNService _payPalIPNService;
+        private readonly PayPalRedirectionService _payPalRedirectionService;
 
         #endregion
 
@@ -51,36 +52,36 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
         public PaymentPayPalExpressCheckoutController(CustomerSettings customerSettings,
             ICustomerService customerService,
             IGenericAttributeService genericAttributeService,
-            IPayPalExpressCheckoutConfirmOrderService payPalExpressCheckoutConfirmOrderService,
-            IPayPalExpressCheckoutPlaceOrderService payPalExpressCheckoutPlaceOrderService,
-            IPayPalExpressCheckoutService payPalExpressCheckoutService,
-            IPayPalExpressCheckoutShippingMethodService payPalExpressCheckoutShippingMethodService,
-            IPayPalIPNService payPalIPNService,
-            IPayPalRedirectionService payPalRedirectionService,
             IProductService productService,
             ISettingService settingService,
             IShoppingCartService shoppingCartService,
             IStoreContext storeContext,
             IWorkContext workContext,
             OrderSettings orderSettings,
-            PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings)
+            PayPalExpressCheckoutConfirmOrderService payPalExpressCheckoutConfirmOrderService,
+            PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings,
+            PayPalExpressCheckoutPlaceOrderService payPalExpressCheckoutPlaceOrderService,
+            PayPalExpressCheckoutService payPalExpressCheckoutService,
+            PayPalExpressCheckoutShippingMethodService payPalExpressCheckoutShippingMethodService,
+            PayPalIPNService payPalIPNService,
+            PayPalRedirectionService payPalRedirectionService)
         {
             _customerSettings = customerSettings;
             _customerService = customerService;
             _genericAttributeService = genericAttributeService;
-            _payPalExpressCheckoutConfirmOrderService = payPalExpressCheckoutConfirmOrderService;
-            _payPalExpressCheckoutPlaceOrderService = payPalExpressCheckoutPlaceOrderService;
-            _payPalExpressCheckoutService = payPalExpressCheckoutService;
-            _payPalExpressCheckoutShippingMethodService = payPalExpressCheckoutShippingMethodService;
-            _payPalIPNService = payPalIPNService;
-            _payPalRedirectionService = payPalRedirectionService;
             _productService = productService;
             _settingService = settingService;
             _shoppingCartService = shoppingCartService;
             _storeContext = storeContext;
             _workContext = workContext;
             _orderSettings = orderSettings;
+            _payPalExpressCheckoutConfirmOrderService = payPalExpressCheckoutConfirmOrderService;
             _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
+            _payPalExpressCheckoutPlaceOrderService = payPalExpressCheckoutPlaceOrderService;
+            _payPalExpressCheckoutService = payPalExpressCheckoutService;
+            _payPalExpressCheckoutShippingMethodService = payPalExpressCheckoutShippingMethodService;
+            _payPalIPNService = payPalIPNService;
+            _payPalRedirectionService = payPalRedirectionService;
         }
 
         #endregion
@@ -312,15 +313,15 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Controllers
             return View("~/Plugins/Payments.PayPalExpressCheckout/Views/Confirm.cshtml", checkoutPlaceOrderModel);
         }
 
-        public IActionResult IPNHandler()
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> IPNHandler()
         {
-            using (var ms = new MemoryStream())
-            {
-                Request.Body.CopyTo(ms);
-                var ipnData = Encoding.ASCII.GetString(ms.ToArray());
+            using var reader = new StreamReader(Request.Body, Encoding.ASCII);
 
-                _payPalIPNService.HandleIPN(ipnData);
-            }
+            var ipnData = await reader.ReadToEndAsync();
+            _payPalIPNService.HandleIPN(ipnData);
+
 
             //nothing should be rendered to visitor
             return Content(string.Empty);

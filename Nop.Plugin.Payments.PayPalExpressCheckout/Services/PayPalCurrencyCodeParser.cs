@@ -4,7 +4,7 @@ using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
-    public class PayPalCurrencyCodeParser : IPayPalCurrencyCodeParser
+    public class PayPalCurrencyCodeParser
     {
         public CurrencyCodeType GetCurrencyCodeType(Currency workingCurrency)
         {

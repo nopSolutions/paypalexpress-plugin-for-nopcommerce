@@ -3,7 +3,7 @@ using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
-    public class PayPalInterfaceService : IPayPalInterfaceService
+    public class PayPalInterfaceService
     {
         private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
 

@@ -9,7 +9,7 @@ using Nop.Services.Orders;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
-    public class PayPalExpressCheckoutConfirmOrderService : IPayPalExpressCheckoutConfirmOrderService
+    public class PayPalExpressCheckoutConfirmOrderService
     {
         private readonly IOrderProcessingService _orderProcessingService;
         private readonly ICurrencyService _currencyService;

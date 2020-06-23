@@ -13,7 +13,7 @@ using Nop.Services.Payments;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
-    public class PayPalCheckoutDetailsService : IPayPalCheckoutDetailsService
+    public class PayPalCheckoutDetailsService
     {
         private readonly IAddressService _addressService;
         private readonly ICountryService _countryService;

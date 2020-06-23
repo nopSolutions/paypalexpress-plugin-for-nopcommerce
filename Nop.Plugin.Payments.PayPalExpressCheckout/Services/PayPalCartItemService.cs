@@ -11,28 +11,28 @@ using Nop.Services.Tax;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
-    public class PayPalCartItemService : IPayPalCartItemService
+    public class PayPalCartItemService
     {
         private readonly IOrderTotalCalculationService _orderTotalCalculationService;
-        private readonly IPayPalCurrencyCodeParser _payPalCurrencyCodeParser;
         private readonly IProductService _productService;
         private readonly IShoppingCartService _shoppingCartService;
         private readonly ITaxService _taxService;
         private readonly IWorkContext _workContext;
+        private readonly PayPalCurrencyCodeParser _payPalCurrencyCodeParser;
 
         public PayPalCartItemService(IOrderTotalCalculationService orderTotalCalculationService,
-            IPayPalCurrencyCodeParser payPalCurrencyCodeParser,
             IProductService productService,
             IShoppingCartService shoppingCartService,
             ITaxService taxService,
-            IWorkContext workContext)
+            IWorkContext workContext,
+            PayPalCurrencyCodeParser payPalCurrencyCodeParser)
         {
             _orderTotalCalculationService = orderTotalCalculationService;
-            _payPalCurrencyCodeParser = payPalCurrencyCodeParser;
             _productService = productService;
             _shoppingCartService = shoppingCartService;
             _taxService = taxService;
             _workContext = workContext;
+            _payPalCurrencyCodeParser = payPalCurrencyCodeParser;
         }
 
         public decimal GetCartItemTotal(IList<ShoppingCartItem> cart)

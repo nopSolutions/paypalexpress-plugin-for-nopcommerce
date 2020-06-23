@@ -9,31 +9,31 @@ using Nop.Services.Payments;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
-    public class PayPalRequestService : IPayPalRequestService
+    public class PayPalRequestService
     {
-        private readonly IPayPalUrlService _payPalUrlService;
-        private readonly IPayPalOrderService _payPalOrderService;
-        private readonly IPayPalCurrencyCodeParser _payPalCurrencyCodeParser;
-        private readonly IPayPalRecurringPaymentsService _payPalRecurringPaymentsService;
         private readonly IProductService _productService;
         private readonly IWorkContext _workContext;
         private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
+        private readonly PayPalCurrencyCodeParser _payPalCurrencyCodeParser;
+        private readonly PayPalOrderService _payPalOrderService;
+        private readonly PayPalRecurringPaymentsService _payPalRecurringPaymentsService;
+        private readonly PayPalUrlService _payPalUrlService;
 
-        public PayPalRequestService(IPayPalUrlService payPalUrlService,
-            IPayPalOrderService payPalOrderService,
-            IPayPalCurrencyCodeParser payPalCurrencyCodeParser,
-            IPayPalRecurringPaymentsService payPalRecurringPaymentsService,
-            IProductService productService,
+        public PayPalRequestService(IProductService productService,
             IWorkContext workContext,
-            PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings)
+            PayPalCurrencyCodeParser payPalCurrencyCodeParser,
+            PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings,
+            PayPalOrderService payPalOrderService,
+            PayPalRecurringPaymentsService payPalRecurringPaymentsService,
+            PayPalUrlService payPalUrlService)
         {
-            _payPalUrlService = payPalUrlService;
-            _payPalOrderService = payPalOrderService;
-            _payPalCurrencyCodeParser = payPalCurrencyCodeParser;
-            _payPalRecurringPaymentsService = payPalRecurringPaymentsService;
             _productService = productService;
             _workContext = workContext;
+            _payPalCurrencyCodeParser = payPalCurrencyCodeParser;
             _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
+            _payPalOrderService = payPalOrderService;
+            _payPalRecurringPaymentsService = payPalRecurringPaymentsService;
+            _payPalUrlService = payPalUrlService;
         }
 
         public SetExpressCheckoutRequestDetailsType GetSetExpressCheckoutRequestDetails(IList<ShoppingCartItem> cart)

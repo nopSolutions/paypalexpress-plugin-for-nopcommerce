@@ -19,22 +19,22 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Infrastructure
         /// <param name="config">Config</param>
         public void Register(ContainerBuilder builder, ITypeFinder typeFinder, NopConfig config)
         {
-            builder.RegisterType<PayPalCartItemService>().As<IPayPalCartItemService>();
-            builder.RegisterType<PayPalCurrencyCodeParser>().As<IPayPalCurrencyCodeParser>();
-            builder.RegisterType<PayPalInterfaceService>().As<IPayPalInterfaceService>();
-            builder.RegisterType<PayPalOrderService>().As<IPayPalOrderService>();
-            builder.RegisterType<PayPalRequestService>().As<IPayPalRequestService>();
-            builder.RegisterType<PayPalSecurityService>().As<IPayPalSecurityService>();
-            builder.RegisterType<PayPalUrlService>().As<IPayPalUrlService>();
-            builder.RegisterType<PayPalCheckoutDetailsService>().As<IPayPalCheckoutDetailsService>();
-            builder.RegisterType<PayPalRecurringPaymentsService>().As<IPayPalRecurringPaymentsService>();
-            builder.RegisterType<PayPalExpressCheckoutConfirmOrderService>().As<IPayPalExpressCheckoutConfirmOrderService>();
-            builder.RegisterType<PayPalExpressCheckoutPlaceOrderService>().As<IPayPalExpressCheckoutPlaceOrderService>();
-            builder.RegisterType<PayPalExpressCheckoutService>().As<IPayPalExpressCheckoutService>();
-            builder.RegisterType<PayPalExpressCheckoutShippingMethodService>().As<IPayPalExpressCheckoutShippingMethodService>();
-            builder.RegisterType<PayPalRecurringPaymentsService>().As<IPayPalRecurringPaymentsService>();
-            builder.RegisterType<PayPalRedirectionService>().As<IPayPalRedirectionService>();
-            builder.RegisterType<PayPalIPNService>().As<IPayPalIPNService>();
+            builder.RegisterType<PayPalCartItemService>().AsSelf();
+            builder.RegisterType<PayPalCurrencyCodeParser>().AsSelf();
+            builder.RegisterType<PayPalInterfaceService>().AsSelf();
+            builder.RegisterType<PayPalOrderService>().AsSelf();
+            builder.RegisterType<PayPalRequestService>().AsSelf();
+            builder.RegisterType<PayPalSecurityService>().AsSelf();
+            builder.RegisterType<PayPalUrlService>().AsSelf();
+            builder.RegisterType<PayPalCheckoutDetailsService>().AsSelf();
+            builder.RegisterType<PayPalRecurringPaymentsService>().AsSelf();
+            builder.RegisterType<PayPalExpressCheckoutConfirmOrderService>().AsSelf();
+            builder.RegisterType<PayPalExpressCheckoutPlaceOrderService>().AsSelf();
+            builder.RegisterType<PayPalExpressCheckoutService>().AsSelf();
+            builder.RegisterType<PayPalExpressCheckoutShippingMethodService>().AsSelf();
+            builder.RegisterType<PayPalRecurringPaymentsService>().AsSelf();
+            builder.RegisterType<PayPalRedirectionService>().AsSelf();
+            builder.RegisterType<PayPalIPNService>().AsSelf();
         }
 
         public int Order => 99;

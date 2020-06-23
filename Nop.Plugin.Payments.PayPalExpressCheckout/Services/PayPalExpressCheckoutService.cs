@@ -11,7 +11,7 @@ using Nop.Services.Orders;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
-    public class PayPalExpressCheckoutService : IPayPalExpressCheckoutService
+    public class PayPalExpressCheckoutService
     {
         private readonly ICustomerService _customerService;
         private readonly IOrderService _orderService;

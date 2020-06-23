@@ -19,14 +19,14 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
     {
         #region Fields
 
-        private readonly ISession _session;
         private readonly ILocalizationService _localizationService;
-        private readonly IPayPalInterfaceService _payPalInterfaceService;
-        private readonly IPayPalRequestService _payPalRequestService;
-        private readonly IPayPalSecurityService _payPalSecurityService;
+        private readonly ISession _session;
         private readonly ISettingService _settingService;
-        private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
         private readonly IWebHelper _webHelper;
+        private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
+        private readonly PayPalInterfaceService _payPalInterfaceService;
+        private readonly PayPalRequestService _payPalRequestService;
+        private readonly PayPalSecurityService _payPalSecurityService;
 
         #endregion
 
@@ -34,21 +34,21 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
 
         public PayPalExpressCheckoutPaymentProcessor(IHttpContextAccessor httpContextAccessor,
             ILocalizationService localizationService,
-            IPayPalInterfaceService payPalInterfaceService,
-            IPayPalRequestService payPalRequestService,
-            IPayPalSecurityService payPalSecurityService,
             ISettingService settingService,
+            IWebHelper webHelper,
             PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings,
-            IWebHelper webHelper)
+            PayPalInterfaceService payPalInterfaceService,
+            PayPalRequestService payPalRequestService,
+            PayPalSecurityService payPalSecurityService)
         {
             _session = httpContextAccessor.HttpContext?.Session;
             _localizationService = localizationService;
+            _settingService = settingService;
+            _webHelper = webHelper;
+            _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
             _payPalInterfaceService = payPalInterfaceService;
             _payPalRequestService = payPalRequestService;
             _payPalSecurityService = payPalSecurityService;
-            _settingService = settingService;
-            _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
-            _webHelper = webHelper;
         }
 
         #endregion

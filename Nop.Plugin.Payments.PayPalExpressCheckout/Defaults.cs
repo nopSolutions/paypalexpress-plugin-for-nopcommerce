@@ -6,33 +6,33 @@
     public class Defaults
     {
         /// <summary>
-        /// Gets or sets PayPal button logo URL
+        /// Gets PayPal button logo URL
         /// </summary>
-        public static string CheckoutButtonImageUrl = "https://www.paypalobjects.com/webstatic/en_US/i/buttons/checkout-logo-medium.png";
+        public static string CheckoutButtonImageUrl => "https://www.paypalobjects.com/webstatic/en_US/i/buttons/checkout-logo-medium.png";
 
         /// <summary>
-        /// Gets or sets the key for a payment info holder entry
+        /// Gets the key for a payment info holder entry
         /// </summary>
-        public static string ProcessPaymentRequestKey = "OrderPaymentInfo";
+        public static string ProcessPaymentRequestKey => "OrderPaymentInfo";
 
         /// <summary>
-        ///  Gets or sets the key for CheckoutPaymentResponseType entry
+        ///  Gets the key for CheckoutPaymentResponseType entry
         /// </summary>
-        public static string CheckoutPaymentResponseTypeKey = "express-checkout-response-type";
+        public static string CheckoutPaymentResponseTypeKey => "express-checkout-response-type";
 
         /// <summary>
-        /// Gets or sets the key for Express Checkout token
+        /// Gets the key for Express Checkout token
         /// </summary>
-        public static string PaypalTokenKey = "PaypalToken";
+        public static string PaypalTokenKey => "PaypalToken";
 
         /// <summary>
-        /// Gets or sets the key for an external unique identifier of a particular PayPal account
+        /// Gets the key for an external unique identifier of a particular PayPal account
         /// </summary>
-        public static string PaypalPayerIdKey = "PaypalPayerId";
+        public static string PaypalPayerIdKey => "PaypalPayerId";
 
         /// <summary>
-        /// Gets or sets the key for an error occurred during the checkout process
+        /// Gets the key for an error occurred during the checkout process
         /// </summary>
-        public static string CheckoutErrorMessageKey = "paypal-ec-error";
+        public static string CheckoutErrorMessageKey => "paypal-ec-error";
     }
 }

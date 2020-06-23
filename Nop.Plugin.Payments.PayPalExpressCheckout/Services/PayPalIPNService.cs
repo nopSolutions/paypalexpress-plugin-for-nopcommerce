@@ -14,7 +14,7 @@ using Nop.Services.Orders;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
-    public class PayPalIPNService : IPayPalIPNService
+    public class PayPalIPNService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IOrderService _orderService;
@@ -171,6 +171,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                                 //order note
                                 _orderService.InsertOrderNote(new OrderNote
                                 {
+                                    OrderId = order.Id,
                                     Note = sb.ToString(),
                                     DisplayToCustomer = false,
                                     CreatedOnUtc = DateTime.UtcNow

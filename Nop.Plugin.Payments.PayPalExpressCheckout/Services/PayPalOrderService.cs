@@ -11,37 +11,37 @@ using Nop.Services.Shipping;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
-    public class PayPalOrderService : IPayPalOrderService
+    public class PayPalOrderService
     {
         private readonly IAddressService _addressService;
-        private readonly IPayPalCurrencyCodeParser _payPalCurrencyCodeParser;
-        private readonly IPayPalCartItemService _payPalCartItemService;
         private readonly IShippingService _shippingService;
         private readonly IGenericAttributeService _genericAttributeService;
         private readonly IStoreContext _storeContext;
         private readonly ICheckoutAttributeParser _checkoutAttributeParser;
         private readonly IWorkContext _workContext;
+        private readonly PayPalCartItemService _payPalCartItemService;
+        private readonly PayPalCurrencyCodeParser _payPalCurrencyCodeParser;
         private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
 
         public PayPalOrderService(
             IAddressService addressService,
-            IPayPalCurrencyCodeParser payPalCurrencyCodeParser,
-            IPayPalCartItemService payPalCartItemService,
             IShippingService shippingService,
             IGenericAttributeService genericAttributeService,
             IStoreContext storeContext,
             ICheckoutAttributeParser checkoutAttributeParser,
             IWorkContext workContext,
+            PayPalCartItemService payPalCartItemService,
+            PayPalCurrencyCodeParser payPalCurrencyCodeParser,
             PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings)
         {
             _addressService = addressService;
-            _payPalCurrencyCodeParser = payPalCurrencyCodeParser;
-            _payPalCartItemService = payPalCartItemService;
             _shippingService = shippingService;
             _genericAttributeService = genericAttributeService;
             _storeContext = storeContext;
             _checkoutAttributeParser = checkoutAttributeParser;
             _workContext = workContext;
+            _payPalCartItemService = payPalCartItemService;
+            _payPalCurrencyCodeParser = payPalCurrencyCodeParser;
             _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
         }
 

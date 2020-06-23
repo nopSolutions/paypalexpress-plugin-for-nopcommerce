@@ -17,22 +17,22 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Components
         private readonly IAddressService _addressService;
         private readonly IOrderProcessingService _orderProcessingService;
         private readonly IPaymentPluginManager _paymentPluginManager;
-        private readonly IPayPalExpressCheckoutService _payPalExpressCheckoutService;
         private readonly IWorkContext _workContext;
+        private readonly PayPalExpressCheckoutService _payPalExpressCheckoutService;
 
         public PaymentPayPalExpressCheckoutViewComponent(AddressSettings addressSettings,
             IAddressService addressService,
             IOrderProcessingService orderProcessingService,
             IPaymentPluginManager paymentPluginManager,
-            IPayPalExpressCheckoutService payPalExpressCheckoutService,
-            IWorkContext workContext)
+            IWorkContext workContext,
+            PayPalExpressCheckoutService payPalExpressCheckoutService)
         {
             _addressSettings = addressSettings;
             _addressService = addressService;
             _orderProcessingService = orderProcessingService;
             _paymentPluginManager = paymentPluginManager;
-            _payPalExpressCheckoutService = payPalExpressCheckoutService;
             _workContext = workContext;
+            _payPalExpressCheckoutService = payPalExpressCheckoutService;
         }
 
         public IViewComponentResult Invoke()

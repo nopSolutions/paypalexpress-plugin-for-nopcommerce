@@ -12,31 +12,31 @@ using Nop.Services.Stores;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
-    public class PayPalRecurringPaymentsService : IPayPalRecurringPaymentsService
+    public class PayPalRecurringPaymentsService
     {
         private readonly IAddressService _addressService;
         private readonly ICountryService _countryService;
         private readonly ICustomerService _customerService;
-        private readonly IPayPalCurrencyCodeParser _payPalCurrencyCodeParser;
         private readonly IStateProvinceService _stateProvinceService;
         private readonly IStoreService _storeService;
         private readonly IWorkContext _workContext;
+        private readonly PayPalCurrencyCodeParser _payPalCurrencyCodeParser;
 
         public PayPalRecurringPaymentsService(IAddressService addressService,
             ICountryService countryService,
             ICustomerService customerService,
-            IPayPalCurrencyCodeParser payPalCurrencyCodeParser,
             IStoreService storeService,
             IStateProvinceService stateProvinceService,
-            IWorkContext workContext)
+            IWorkContext workContext,
+            PayPalCurrencyCodeParser payPalCurrencyCodeParser)
         {
             _addressService = addressService;
             _countryService = countryService;
             _customerService = customerService;
-            _payPalCurrencyCodeParser = payPalCurrencyCodeParser;
             _stateProvinceService = stateProvinceService;
             _storeService = storeService;
             _workContext = workContext;
+            _payPalCurrencyCodeParser = payPalCurrencyCodeParser;
         }
 
         public CreateRecurringPaymentsProfileRequestDetailsType GetCreateRecurringPaymentProfileRequestDetails(

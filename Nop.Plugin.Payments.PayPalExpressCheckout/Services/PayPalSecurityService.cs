@@ -2,7 +2,7 @@
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
-    public class PayPalSecurityService : IPayPalSecurityService
+    public class PayPalSecurityService
     {
         private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
 

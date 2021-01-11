@@ -1,16 +1,20 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Nop.Core;
+using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Helpers;
 using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
 using Nop.Services.Catalog;
+using Nop.Services.Directory;
 using Nop.Services.Payments;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
     public class PayPalRequestService
     {
+        private readonly ICurrencyService _currencyService;
+        private readonly CurrencySettings _currencySettings;
         private readonly IProductService _productService;
         private readonly IWorkContext _workContext;
         private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
@@ -19,7 +23,9 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         private readonly PayPalRecurringPaymentsService _payPalRecurringPaymentsService;
         private readonly PayPalUrlService _payPalUrlService;
 
-        public PayPalRequestService(IProductService productService,
+        public PayPalRequestService(ICurrencyService currencyService,
+            CurrencySettings currencySettings,
+            IProductService productService,
             IWorkContext workContext,
             PayPalCurrencyCodeParser payPalCurrencyCodeParser,
             PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings,
@@ -27,6 +33,8 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             PayPalRecurringPaymentsService payPalRecurringPaymentsService,
             PayPalUrlService payPalUrlService)
         {
+            _currencyService = currencyService;
+            _currencySettings = currencySettings;
             _productService = productService;
             _workContext = workContext;
             _payPalCurrencyCodeParser = payPalCurrencyCodeParser;
@@ -142,7 +150,12 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             var transactionId = refundPaymentRequest.Order.CaptureTransactionId;
             var refundType = refundPaymentRequest.IsPartialRefund ? RefundType.Partial : RefundType.Full;
 
-            var currencyCodeType = _payPalCurrencyCodeParser.GetCurrencyCodeType(refundPaymentRequest.Order.CustomerCurrencyCode);
+           //get the primary store currency
+            var currency = _currencyService.GetCurrencyById(_currencySettings.PrimaryStoreCurrencyId);
+            if (currency == null)
+                throw new NopException("Primary store currency cannot be loaded");
+
+            var currencyCodeType = _payPalCurrencyCodeParser.GetCurrencyCodeType(currency.CurrencyCode);
             return new RefundTransactionReq
             {
                 RefundTransactionRequest = new RefundTransactionRequestType

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Nop.Core;
 using Nop.Core.Domain.Logging;
@@ -28,7 +29,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
 
         #region Methods
 
-        public static T1 HandleResponse<T1, T2>(this T2 response, T1 result, Action<T1, T2> onSuccess, Action<T1, T2> onFailure, Guid orderGuid)
+        public static async Task<T1> HandleResponseAsync<T1, T2>(this T2 response, T1 result, Action<T1, T2> onSuccess, Action<T1, T2> onFailure, Guid orderGuid)
         where T2 : AbstractResponseType
         {
             if (response.Ack == AckCodeType.Success || response.Ack == AckCodeType.SuccessWithWarning)
@@ -36,32 +37,32 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
             else
                 onFailure(result, response);
 
-            LogResponse(response, orderGuid);
+            await LogResponseAsync(response, orderGuid);
 
             return result;
         }
 
-        public static void LogResponse<T>(this T response, Guid orderGuid)
+        public static async  Task LogResponseAsync<T>(this T response, Guid orderGuid)
             where T : AbstractResponseType
         {
             var chunks = GetMessage(response);
 
-            LogOrderNotesInternal(response, orderGuid, chunks);
-            LogDebugMessages(response, chunks);
+            await LogOrderNotesInternalAsync(response, orderGuid, chunks);
+            await LogDebugMessagesAsync(response, chunks);
         }
 
-        public static void LogOrderNotes<T>(this T response, Guid orderGuid)
+        public static async Task LogOrderNotesAsync<T>(this T response, Guid orderGuid)
             where T : AbstractResponseType
         {
             var chunks = GetMessage(response);
 
-            LogOrderNotesInternal(response, orderGuid, chunks);
+            await LogOrderNotesInternalAsync(response, orderGuid, chunks);
         }
 
-        private static void LogOrderNotesInternal<T>(T response, Guid orderGuid, List<IEnumerable<char>> chunks) where T : AbstractResponseType
+        private static async Task LogOrderNotesInternalAsync<T>(T response, Guid orderGuid, List<IEnumerable<char>> chunks) where T : AbstractResponseType
         {
             var orderService = EngineContext.Current.Resolve<IOrderService>();
-            var order = orderService.GetOrderByGuid(orderGuid);
+            var order = await orderService.GetOrderByGuidAsync(orderGuid);
             for (var index = 0; index < chunks.Count; index++)
             {
                 var chunk = chunks[index];
@@ -71,7 +72,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
                 if (order == null)
                     continue;
 
-                orderService.InsertOrderNote(new OrderNote
+                await orderService.InsertOrderNoteAsync(new OrderNote
                 {
                     OrderId = order.Id,
                     DisplayToCustomer = false,
@@ -79,11 +80,11 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
                     CreatedOnUtc = DateTime.UtcNow
                 });
 
-                orderService.UpdateOrder(order);
+                await orderService.UpdateOrderAsync(order);
             }
         }
 
-        private static void LogDebugMessages<T>(T response, List<IEnumerable<char>> chunks) where T : AbstractResponseType
+        private static async Task LogDebugMessagesAsync<T>(T response, List<IEnumerable<char>> chunks) where T : AbstractResponseType
         {
             for (var index = 0; index < chunks.Count; index++)
             {
@@ -96,7 +97,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
 
                 var logger = EngineContext.Current.Resolve<ILogger>();
 
-                logger.InsertLog(LogLevel.Debug, intro, message);
+                await logger.InsertLogAsync(LogLevel.Debug, intro, message);
             }
         }
 
@@ -139,11 +140,11 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Helpers
             }
         }
 
-        public static BasicAmountType GetBasicAmountType(this decimal value, CurrencyCodeType currency)
+        public static async Task<BasicAmountType> GetBasicAmountTypeAsync(this decimal value, CurrencyCodeType currency)
         {
             var currencyService = EngineContext.Current.Resolve<ICurrencyService>();
             var workContext = EngineContext.Current.Resolve<IWorkContext>();
-            var valueInCustomerCurrency = currencyService.ConvertCurrency(value, workContext.WorkingCurrency.Rate);
+            var valueInCustomerCurrency = currencyService.ConvertCurrency(value, (await workContext.GetWorkingCurrencyAsync()).Rate);
 
             return new BasicAmountType
             {

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 using Nop.Core;
@@ -62,7 +63,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                        "https://www.sandbox.paypal.com/us/cgi-bin/webscr";
         }
 
-        public void HandleIPN(string ipnData)
+        public async Task HandleIPNAsync(string ipnData)
         {
             if (VerifyIPN(ipnData, out var values))
             {
@@ -81,10 +82,8 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
                 var sb = new StringBuilder();
                 sb.AppendLine("Paypal IPN:");
-                foreach (var kvp in values)
-                {
+                foreach (var kvp in values) 
                     sb.AppendLine(kvp.Key + ": " + kvp.Value);
-                }
 
                 var newPaymentStatus = GetPaymentStatus(paymentStatus, pendingReason);
                 sb.AppendLine("New payment status: " + newPaymentStatus);
@@ -106,10 +105,10 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                                 // ignored
                             }
 
-                            var initialOrder = _orderService.GetOrderByGuid(orderNumberGuid);
+                            var initialOrder = await _orderService.GetOrderByGuidAsync(orderNumberGuid);
                             if (initialOrder != null)
                             {
-                                var recurringPayments = _orderService.SearchRecurringPayments(0, 0, initialOrder.Id);
+                                var recurringPayments = await _orderService.SearchRecurringPaymentsAsync(0, 0, initialOrder.Id);
                                 foreach (var rp in recurringPayments)
                                 {
                                     switch (newPaymentStatus)
@@ -118,24 +117,22 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                                         case PaymentStatus.Paid:
                                             {
 
-                                                var recurringPaymentHistory = _orderService.GetRecurringPaymentHistory(rp);
+                                                var recurringPaymentHistory = await _orderService.GetRecurringPaymentHistoryAsync(rp);
                                                 if (recurringPaymentHistory.Count == 0)
                                                 {
                                                     //first payment
-                                                    _orderService.InsertRecurringPaymentHistory(new RecurringPaymentHistory
+                                                    await _orderService.InsertRecurringPaymentHistoryAsync(new RecurringPaymentHistory
                                                     {
                                                         RecurringPaymentId = rp.Id,
                                                         OrderId = initialOrder.Id,
                                                         CreatedOnUtc = DateTime.UtcNow
                                                     });
 
-                                                    _orderService.UpdateRecurringPayment(rp);
+                                                    await _orderService.UpdateRecurringPaymentAsync(rp);
                                                 }
                                                 else
-                                                {
                                                     //next payments
-                                                    _orderProcessingService.ProcessNextRecurringPayment(rp);
-                                                }
+                                                    await _orderProcessingService.ProcessNextRecurringPaymentAsync(rp);
                                             }
 
                                             break;
@@ -143,12 +140,10 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                                 }
 
                                 //this.OrderService.InsertOrderNote(newOrder.OrderId, sb.ToString(), DateTime.UtcNow);
-                                _logger.Information("PayPal IPN. Recurring info", new NopException(sb.ToString()));
+                                await _logger.InformationAsync("PayPal IPN. Recurring info", new NopException(sb.ToString()));
                             }
                             else
-                            {
-                                _logger.Error("PayPal IPN. Order is not found", new NopException(sb.ToString()));
-                            }
+                                await _logger.ErrorAsync("PayPal IPN. Order is not found", new NopException(sb.ToString()));
                         }
 
                         break;
@@ -165,18 +160,18 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                                 // ignored
                             }
 
-                            var order = _orderService.GetOrderByGuid(orderNumberGuid);
+                            var order = await _orderService.GetOrderByGuidAsync(orderNumberGuid);
                             if (order != null)
                             {
                                 //order note
-                                _orderService.InsertOrderNote(new OrderNote
+                                await _orderService.InsertOrderNoteAsync(new OrderNote
                                 {
                                     OrderId = order.Id,
                                     Note = sb.ToString(),
                                     DisplayToCustomer = false,
                                     CreatedOnUtc = DateTime.UtcNow
                                 });
-                                _orderService.UpdateOrder(order);
+                                await _orderService.UpdateOrderAsync(order);
 
                                 switch (newPaymentStatus)
                                 {
@@ -184,35 +179,33 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                                         break;
                                     case PaymentStatus.Authorized:
                                         if (_orderProcessingService.CanMarkOrderAsAuthorized(order))
-                                            _orderProcessingService.MarkAsAuthorized(order);
+                                            await _orderProcessingService.MarkAsAuthorizedAsync(order);
                                         break;
                                     case PaymentStatus.Paid:
                                         if (_orderProcessingService.CanMarkOrderAsPaid(order))
-                                            _orderProcessingService.MarkOrderAsPaid(order);
+                                            await _orderProcessingService.MarkOrderAsPaidAsync(order);
                                         break;
                                     case PaymentStatus.Refunded:
                                         if (_orderProcessingService.CanRefundOffline(order))
-                                            _orderProcessingService.RefundOffline(order);
+                                            await _orderProcessingService.RefundOfflineAsync(order);
                                         break;
                                     case PaymentStatus.Voided:
                                         if (_orderProcessingService.CanVoidOffline(order))
-                                            _orderProcessingService.VoidOffline(order);
+                                            await _orderProcessingService.VoidOfflineAsync(order);
                                         break;
                                     default:
                                         break;
                                 }
                             }
                             else
-                                _logger.Error("PayPal IPN. Order is not found", new NopException(sb.ToString()));
+                                await _logger.ErrorAsync("PayPal IPN. Order is not found", new NopException(sb.ToString()));
                         }
 
                         break;
                 }
             }
             else
-            {
-                _logger.Error("PayPal IPN failed.", new NopException(ipnData));
-            }
+                await _logger.ErrorAsync("PayPal IPN failed.", new NopException(ipnData));
         }
 
         /// <summary>
@@ -231,16 +224,12 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             req.ContentLength = formContent.Length;
             req.UserAgent = _httpContextAccessor.HttpContext.Request.Headers[HeaderNames.UserAgent];
 
-            using (var sw = new StreamWriter(req.GetRequestStream(), Encoding.ASCII))
-            {
+            using (var sw = new StreamWriter(req.GetRequestStream(), Encoding.ASCII)) 
                 sw.Write(formContent);
-            }
 
             string response;
-            using (var sr = new StreamReader(req.GetResponse().GetResponseStream() ?? new MemoryStream()))
-            {
+            using (var sr = new StreamReader(req.GetResponse().GetResponseStream() ?? new MemoryStream())) 
                 response = WebUtility.UrlDecode(sr.ReadToEnd());
-            }
 
             var success = response.Trim().Equals("VERIFIED", StringComparison.OrdinalIgnoreCase);
 

@@ -5,8 +5,8 @@
 
 <form asp-controller="PaymentPayPalExpressCheckout" asp-action="Configure" method="post">
     @Html.ValidationSummary()
-    <div class="panel-group">
-        <div class="panel panel-default">
+    <div class="cards-group">
+        <div class="card card-default">
 
             <script type="text/javascript">
                 $(document).ready(function () {
@@ -16,21 +16,21 @@
 
                 function changeBusinessAccount() {
                     if ($('#@Html.IdFor(model => model.DoNotHaveBusinessAccount)').is(':checked')) {
-                        $('#pnlEmailAddress').show();
-                        $('#pnlApiSignature').hide();
-                        $('#pnlUsername').hide();
-                        $('#pnlPassword').hide();
+                        $('#pnlEmailAddress').showElement();
+                        $('#pnlApiSignature').hideElement();
+                        $('#pnlUsername').hideElement();
+                        $('#pnlPassword').hideElement();
                     } else {
-                        $('#pnlApiSignature').show();
-                        $('#pnlUsername').show();
-                        $('#pnlPassword').show();
-                        $('#pnlEmailAddress').hide();
+                        $('#pnlApiSignature').showElement();
+                        $('#pnlUsername').showElement();
+                        $('#pnlPassword').showElement();
+                        $('#pnlEmailAddress').hideElement();
                     }
                 };
             </script>
 
-            <div class="panel-body">
-                <div class="form-group">
+            <div class="card-body">
+                <div class="form-group row">
                     <div class="col-md-3">
                         <nop-label asp-for="DoNotHaveBusinessAccount" />
                     </div>
@@ -39,7 +39,7 @@
                         <span asp-validation-for="DoNotHaveBusinessAccount"></span>
                     </div>
                 </div>
-                <div class="form-group" id="pnlApiSignature">
+                <div class="form-group row" id="pnlApiSignature">
                     <div class="col-md-3">
                         <nop-label asp-for="ApiSignature" />
                     </div>
@@ -48,7 +48,7 @@
                         <span asp-validation-for="ApiSignature"></span>
                     </div>
                 </div>
-                <div class="form-group" id="pnlUsername">
+                <div class="form-group row" id="pnlUsername">
                     <div class="col-md-3">
                         <nop-label asp-for="Username" />
                     </div>
@@ -57,7 +57,7 @@
                         <span asp-validation-for="Username"></span>
                     </div>
                 </div>
-                <div class="form-group" id="pnlPassword">
+                <div class="form-group row" id="pnlPassword">
                     <div class="col-md-3">
                         <nop-label asp-for="Password" />
                     </div>
@@ -66,7 +66,7 @@
                         <span asp-validation-for="Password"></span>
                     </div>
                 </div>
-                <div class="form-group" id="pnlEmailAddress">
+                <div class="form-group row" id="pnlEmailAddress">
                     <div class="col-md-3">
                         <nop-label asp-for="EmailAddress" />
                     </div>
@@ -75,7 +75,7 @@
                         <span asp-validation-for="EmailAddress"></span>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <div class="col-md-3">
                         <nop-label asp-for="IsLive" />
                     </div>
@@ -84,7 +84,7 @@
                         <span asp-validation-for="IsLive"></span>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <div class="col-md-3">
                         <nop-label asp-for="LogoImageURL" />
                     </div>
@@ -93,7 +93,7 @@
                         <span asp-validation-for="LogoImageURL"></span>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <div class="col-md-3">
                         <nop-label asp-for="CartBorderColor" />
                     </div>
@@ -102,7 +102,7 @@
                         <span asp-validation-for="CartBorderColor"></span>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <div class="col-md-3">
                         <nop-label asp-for="LocaleCode" />
                     </div>
@@ -111,7 +111,7 @@
                         <span asp-validation-for="LocaleOptions"></span>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <div class="col-md-3">
                         <nop-label asp-for="RequireConfirmedShippingAddress" />
                     </div>
@@ -120,7 +120,7 @@
                         <span asp-validation-for="RequireConfirmedShippingAddress"></span>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <div class="col-md-3">
                         <nop-label asp-for="PaymentAction" />
                     </div>
@@ -129,7 +129,7 @@
                         <span asp-validation-for="PaymentAction"></span>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <div class="col-md-3">
                         <nop-label asp-for="EnableDebugLogging" />
                     </div>
@@ -138,7 +138,7 @@
                         <span asp-validation-for="EnableDebugLogging"></span>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <div class="col-md-9 col-md-offset-3">
                         <input type="submit" name="save" class="btn btn-primary" value="@T("Admin.Common.Save")" />
                     </div>

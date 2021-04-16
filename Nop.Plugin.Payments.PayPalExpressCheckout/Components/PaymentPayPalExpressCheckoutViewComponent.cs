@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Domain.Common;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Models;
@@ -35,24 +36,24 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Components
             _payPalExpressCheckoutService = payPalExpressCheckoutService;
         }
 
-        public IViewComponentResult Invoke()
+        public async Task<IViewComponentResult> InvokeAsync()
         {
-            var cart = _payPalExpressCheckoutService.GetCart();
+            var cart = await _payPalExpressCheckoutService.GetCartAsync();
             if (cart.Count == 0)
                 return Content(string.Empty);
 
-            if (!_orderProcessingService.ValidateMinOrderSubtotalAmount(cart))
+            if (!await _orderProcessingService.ValidateMinOrderSubtotalAmountAsync(cart))
                 return Content(string.Empty);
 
             var filterByCountryId = 0;
-            var billingAddress = _addressService.GetAddressById(_workContext.CurrentCustomer.BillingAddressId ?? 0);
+            var billingAddress = await _addressService.GetAddressByIdAsync((await _workContext.GetCurrentCustomerAsync()).BillingAddressId ?? 0);
 
             if (_addressSettings.CountryEnabled && billingAddress?.CountryId != null)
                 filterByCountryId = billingAddress.CountryId.Value;
 
-            var plugin = _paymentPluginManager.LoadPluginBySystemName("Payments.PayPalExpressCheckout");
+            var plugin = await _paymentPluginManager.LoadPluginBySystemNameAsync("Payments.PayPalExpressCheckout");
 
-            if (plugin == null || _paymentPluginManager.GetRestrictedCountryIds(plugin).Contains(filterByCountryId))
+            if (plugin == null || (await _paymentPluginManager.GetRestrictedCountryIdsAsync(plugin)).Contains(filterByCountryId))
                 return Content(string.Empty);
 
             var model = new PaymentInfoModel

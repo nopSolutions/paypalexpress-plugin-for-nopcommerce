@@ -3,7 +3,7 @@ using Nop.Web.Framework.Models;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
 {
-    public partial class CheckoutShippingMethodModel : BaseNopModel
+    public partial record CheckoutShippingMethodModel : BaseNopModel
     {
         public CheckoutShippingMethodModel()
         {
@@ -17,7 +17,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
 
         #region Nested classes
 
-        public partial class ShippingMethodModel : BaseNopModel
+        public partial record ShippingMethodModel : BaseNopModel
         {
             public string ShippingRateComputationMethodSystemName { get; set; }
             public string Name { get; set; }

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Nop.Core;
 using Nop.Core.Domain.Discounts;
 using Nop.Core.Domain.Orders;
@@ -35,44 +36,23 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             _payPalCurrencyCodeParser = payPalCurrencyCodeParser;
         }
 
-        public decimal GetCartItemTotal(IList<ShoppingCartItem> cart)
+        public async Task<PaymentDetailsItemType> CreatePaymentItemAsync(ShoppingCartItem item)
         {
-            _orderTotalCalculationService.GetShoppingCartSubTotal(cart, false, out _, out _, out _, out var subTotalWithDiscount);
-            return subTotalWithDiscount;
-        }
-
-        public decimal GetCartTotal(IList<ShoppingCartItem> cart)
-        {
-            return GetCartItemTotal(cart) + GetTax(cart) + GetShippingTotal(cart);
-        }
-
-        public decimal GetTax(IList<ShoppingCartItem> cart)
-        {
-            return _orderTotalCalculationService.GetTaxTotal(cart);
-        }
-
-        public decimal GetShippingTotal(IList<ShoppingCartItem> cart)
-        {
-            return _orderTotalCalculationService.GetShoppingCartShippingTotal(cart).GetValueOrDefault();
-        }
-
-        public PaymentDetailsItemType CreatePaymentItem(ShoppingCartItem item)
-        {
-            var product = _productService.GetProductById(item.ProductId);
+            var product = await _productService.GetProductByIdAsync(item.ProductId);
 
             if (product is null)
                 throw new NopException("Product is not found");
 
-            var productPrice = _taxService.GetProductPrice(product,
-                _shoppingCartService.GetUnitPrice(item), false,
-                _workContext.CurrentCustomer, out _);
+            var (productPrice, _) = await _taxService.GetProductPriceAsync(product,
+                (await _shoppingCartService.GetUnitPriceAsync(item, true)).unitPrice, false,
+                await _workContext.GetCurrentCustomerAsync());
 
-            var currencyCodeType = _payPalCurrencyCodeParser.GetCurrencyCodeType(_workContext.WorkingCurrency);
+            var currencyCodeType = _payPalCurrencyCodeParser.GetCurrencyCodeType(await _workContext.GetWorkingCurrencyAsync());
             var paymentDetailsItemType = new PaymentDetailsItemType
             {
                 Name = product.Name,
                 //Description = _productAttributeFormatter.FormatAttributes(item.ProductVariant, item.AttributesXml),
-                Amount = productPrice.GetBasicAmountType(currencyCodeType),
+                Amount = await productPrice.GetBasicAmountTypeAsync(currencyCodeType),
                 ItemCategory =
                     product.IsDownload
                         ? ItemCategoryType.Digital
@@ -83,28 +63,34 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             return paymentDetailsItemType;
         }
 
-        public decimal GetCartTotal(IList<ShoppingCartItem> cart, out decimal orderTotalDiscountAmount,
-            out List<Discount> appliedDiscounts,
-            out int redeemedRewardPoints, out decimal redeemedRewardPointsAmount,
-            out List<AppliedGiftCard> appliedGiftCards)
+        public async Task<decimal> GetTaxAsync(IList<ShoppingCartItem> cart)
         {
-            _orderTotalCalculationService.GetShoppingCartTotal(cart, out orderTotalDiscountAmount,
-                out appliedDiscounts,
-                out appliedGiftCards, out redeemedRewardPoints,
-                out redeemedRewardPointsAmount);
-
-            return GetCartTotal(cart) - (orderTotalDiscountAmount + appliedGiftCards.Sum(x => x.AmountCanBeUsed));
+            return (await _orderTotalCalculationService.GetTaxTotalAsync(cart)).taxTotal;
         }
 
-        public decimal GetCartItemTotal(IList<ShoppingCartItem> cart, out decimal subTotalDiscountAmount,
-            out List<Discount> subTotalAppliedDiscounts, out decimal subTotalWithoutDiscount,
-            out decimal subTotalWithDiscount)
+        public async Task<decimal> GetShippingTotalAsync(IList<ShoppingCartItem> cart)
         {
-            _orderTotalCalculationService.GetShoppingCartSubTotal(cart, false, out subTotalDiscountAmount,
-                out subTotalAppliedDiscounts,
-                out subTotalWithoutDiscount, out subTotalWithDiscount);
+            return (await _orderTotalCalculationService.GetShoppingCartShippingTotalAsync(cart)).GetValueOrDefault();
+        }
 
-            return subTotalWithDiscount;
+        public async Task<(decimal cartTotal, decimal orderTotalDiscountAmount, List<Discount> appliedDiscounts, int redeemedRewardPoints, decimal redeemedRewardPointsAmount, List<AppliedGiftCard> appliedGiftCards)> GetCartTotalAsync(IList<ShoppingCartItem> cart)
+        {
+            var (_, orderTotalDiscountAmount, appliedDiscounts, appliedGiftCards, redeemedRewardPoints, redeemedRewardPointsAmount) = await _orderTotalCalculationService.GetShoppingCartTotalAsync(cart);
+
+            var taxTotal = await GetTaxAsync(cart);
+            var shippingTotal = await GetShippingTotalAsync(cart);
+            var (_, _, _, subTotalWithDiscount, _) = await _orderTotalCalculationService.GetShoppingCartSubTotalAsync(cart, false);
+
+            var cartTotal = subTotalWithDiscount + taxTotal + shippingTotal;
+
+            return (cartTotal - (orderTotalDiscountAmount + appliedGiftCards.Sum(x => x.AmountCanBeUsed)), orderTotalDiscountAmount, appliedDiscounts, redeemedRewardPoints, redeemedRewardPointsAmount, appliedGiftCards);
+        }
+
+        public async Task<(decimal cartItemTotal, decimal subTotalDiscountAmount, List<Discount> subTotalAppliedDiscounts, decimal subTotalWithoutDiscount, decimal subTotalWithDiscount)> GetCartItemTotalAsync(IList<ShoppingCartItem> cart)
+        {
+            var (subTotalDiscountAmount, subTotalAppliedDiscounts, subTotalWithoutDiscount, subTotalWithDiscount, _) = await _orderTotalCalculationService.GetShoppingCartSubTotalAsync(cart, false);
+
+            return (subTotalWithDiscount, subTotalDiscountAmount, subTotalAppliedDiscounts, subTotalWithoutDiscount, subTotalWithDiscount);
         }
     }
 }

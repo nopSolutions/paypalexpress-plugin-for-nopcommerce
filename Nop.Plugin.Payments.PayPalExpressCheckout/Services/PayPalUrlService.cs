@@ -1,5 +1,4 @@
-﻿using System;
-using Nop.Core;
+﻿using Nop.Core;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 {
@@ -24,17 +23,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         {
             return $"{_webHelper.GetStoreLocation()}cart";
         }
-
-        public string GetCallbackURL()
-        {
-            throw new NotImplementedException();
-        }
-
-        public string GetCallbackTimeout()
-        {
-            return "5";
-        }
-
+        
         public string GetExpressCheckoutRedirectUrl(string token)
         {
             return

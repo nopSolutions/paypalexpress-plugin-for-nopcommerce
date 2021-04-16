@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Nop.Core;
 using Nop.Core.Http.Extensions;
@@ -45,7 +46,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             _payPalExpressCheckoutService = payPalExpressCheckoutService;
         }
 
-        public CheckoutPlaceOrderModel PlaceOrder()
+        public async Task<CheckoutPlaceOrderModel> PlaceOrderAsync()
         {
             var model = new CheckoutPlaceOrderModel();
             try
@@ -59,25 +60,28 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 }
 
                 //prevent 2 orders being placed within an X seconds time frame
-                if (!_payPalExpressCheckoutService.IsMinimumOrderPlacementIntervalValid(_workContext.CurrentCustomer))
-                    throw new Exception(_localizationService.GetResource("Checkout.MinOrderPlacementInterval"));
+                if (!await _payPalExpressCheckoutService.IsMinimumOrderPlacementIntervalValidAsync(await _workContext.GetCurrentCustomerAsync()))
+                    throw new Exception(await _localizationService.GetResourceAsync("Checkout.MinOrderPlacementInterval"));
 
                 //place order
-                processPaymentRequest.StoreId = _storeContext.CurrentStore.Id;
-                processPaymentRequest.CustomerId = _workContext.CurrentCustomer.Id;
+                processPaymentRequest.StoreId = (await _storeContext.GetCurrentStoreAsync()).Id;
+                processPaymentRequest.CustomerId = (await _workContext.GetCurrentCustomerAsync()).Id;
                 processPaymentRequest.PaymentMethodSystemName = "Payments.PayPalExpressCheckout";
-                var placeOrderResult = _orderProcessingService.PlaceOrder(processPaymentRequest);
+                var placeOrderResult = await _orderProcessingService.PlaceOrderAsync(processPaymentRequest);
 
                 if (placeOrderResult.Success)
                 {
                     var doExpressCheckoutPaymentResponseType = _session.Get<DoExpressCheckoutPaymentResponseType>(Defaults.CheckoutPaymentResponseTypeKey);
-                    doExpressCheckoutPaymentResponseType?.LogOrderNotes(placeOrderResult.PlacedOrder.OrderGuid);
+                    
+                    if (doExpressCheckoutPaymentResponseType != null)
+                        await doExpressCheckoutPaymentResponseType.LogOrderNotesAsync(placeOrderResult.PlacedOrder.OrderGuid);
+                    
                     _session.Remove(Defaults.ProcessPaymentRequestKey);
                     var postProcessPaymentRequest = new PostProcessPaymentRequest
                     {
                         Order = placeOrderResult.PlacedOrder
                     };
-                    _paymentService.PostProcessPayment(postProcessPaymentRequest);
+                    await _paymentService.PostProcessPaymentAsync(postProcessPaymentRequest);
 
                     if (_webHelper.IsRequestBeingRedirected || _webHelper.IsPostBeingDone)
                     {
@@ -95,7 +99,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             }
             catch (Exception exc)
             {
-                _logger.Warning(exc.Message, exc);
+                await _logger.WarningAsync(exc.Message, exc);
                 model.Warnings.Add(exc.Message);
             }
 

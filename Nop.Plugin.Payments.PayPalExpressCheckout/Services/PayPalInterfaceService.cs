@@ -15,7 +15,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         public PayPalAPIAAInterfaceClient GetAAService()
         {
             return
-                new PayPalAPIAAInterfaceClient(new BasicHttpsBinding(),
+                new(new BasicHttpsBinding(),
                     new EndpointAddress(_payPalExpressCheckoutPaymentSettings.IsLive
                         ? "https://api-3t.paypal.com/2.0/"
                         : "https://api-3t.sandbox.paypal.com/2.0/"));
@@ -24,7 +24,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
         public PayPalAPIInterfaceClient GetService()
         {
             return
-                new PayPalAPIInterfaceClient(new BasicHttpsBinding(),
+                new(new BasicHttpsBinding(),
                     new EndpointAddress(_payPalExpressCheckoutPaymentSettings.IsLive
                         ? "https://api-3t.paypal.com/2.0/"
                         : "https://api-3t.sandbox.paypal.com/2.0/"));

@@ -3,7 +3,7 @@ using Nop.Web.Framework.Models;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
 {
-    public partial class CheckoutConfirmModel : BaseNopModel
+    public partial record CheckoutConfirmModel : BaseNopModel
     {
         public CheckoutConfirmModel()
         {

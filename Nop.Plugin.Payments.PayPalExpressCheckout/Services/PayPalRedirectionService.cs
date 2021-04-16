@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Nop.Core;
@@ -55,17 +56,17 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             _payPalUrlService = payPalUrlService;
         }
 
-        public string ProcessSubmitButton(IList<ShoppingCartItem> cart, ITempDataDictionary tempData)
+        public async Task<string> ProcessSubmitButtonAsync(IList<ShoppingCartItem> cart, ITempDataDictionary tempData)
         {
             using var payPalApiaaInterface = _payPalInterfaceService.GetAAService();
             var customSecurityHeaderType = _payPalSecurityService.GetRequesterCredentials();
 
             var setExpressCheckoutResponse = payPalApiaaInterface.SetExpressCheckout(
-                ref customSecurityHeaderType, _payPalRequestService.GetSetExpressCheckoutRequest(cart));
+                ref customSecurityHeaderType, await _payPalRequestService.GetSetExpressCheckoutRequestAsync(cart));
 
             var result = new ProcessPaymentResult();
             var redirectUrl = string.Empty;
-            setExpressCheckoutResponse.HandleResponse(result,
+            await setExpressCheckoutResponse.HandleResponseAsync(result,
                 (paymentResult, type) =>
                 {
                     var token = setExpressCheckoutResponse.Token;
@@ -73,8 +74,8 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 },
                 (paymentResult, type) =>
                 {
-                    _logger.InsertLog(LogLevel.Error, "Error passing cart to PayPal",
-                        string.Join(", ", setExpressCheckoutResponse.Errors.Select(errorType => errorType.ErrorCode + ": " + errorType.LongMessage)));
+                    _logger.InsertLogAsync(LogLevel.Error, "Error passing cart to PayPal",
+                        string.Join(", ", setExpressCheckoutResponse.Errors.Select(errorType => errorType.ErrorCode + ": " + errorType.LongMessage))).Wait();
                     tempData[Defaults.CheckoutErrorMessageKey] = "An error occurred setting up your cart for PayPal.";
                     redirectUrl = _webHelper.GetUrlReferrer();
                 }, Guid.Empty);
@@ -82,19 +83,19 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             return redirectUrl;
         }
 
-        public bool ProcessReturn(string token)
+        public async Task<bool> ProcessReturnAsync(string token)
         {
             using var payPalApiaaInterfaceClient = _payPalInterfaceService.GetAAService();
             var customSecurityHeaderType = _payPalSecurityService.GetRequesterCredentials();
             var details = payPalApiaaInterfaceClient.GetExpressCheckoutDetails(ref customSecurityHeaderType,
                 _payPalRequestService.GetGetExpressCheckoutDetailsRequest(token));
 
-            details.LogResponse(Guid.Empty);
+            await details.LogResponseAsync(Guid.Empty);
             if (details.Ack != AckCodeType.Success && details.Ack != AckCodeType.SuccessWithWarning)
                 return false;
 
             var request =
-                _payPalCheckoutDetailsService.SetCheckoutDetails(
+                await _payPalCheckoutDetailsService.SetCheckoutDetailsAsync(
                     details.GetExpressCheckoutDetailsResponseDetails);
 
             //set previous order GUID (if exists)
@@ -102,10 +103,10 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
             _session.Set(Defaults.ProcessPaymentRequestKey, request);
 
-            var customer = _customerService.GetCustomerById(request.CustomerId);
+            var customer = await _customerService.GetCustomerByIdAsync(request.CustomerId);
 
-            _workContext.CurrentCustomer = customer;
-            _customerService.UpdateCustomer(_workContext.CurrentCustomer);
+            await _workContext.SetCurrentCustomerAsync(customer);
+            await _customerService.UpdateCustomerAsync(await _workContext.GetCurrentCustomerAsync());
             return true;
         }
 

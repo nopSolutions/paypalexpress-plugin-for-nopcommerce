@@ -13,7 +13,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
         public CustomSecurityHeaderType GetRequesterCredentials()
         {
-            return new CustomSecurityHeaderType
+            return new()
             {
                 Credentials = _payPalExpressCheckoutPaymentSettings.DoNotHaveBusinessAccount
                     ? new UserIdPasswordType

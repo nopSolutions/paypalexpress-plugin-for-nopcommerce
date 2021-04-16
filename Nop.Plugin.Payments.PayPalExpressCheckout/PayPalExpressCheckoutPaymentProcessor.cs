@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
@@ -59,16 +60,19 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
         /// Process a payment
         /// </summary>
         /// <param name="processPaymentRequest">Payment info required for an order processing</param>
-        /// <returns>Process payment result</returns>
-        public ProcessPaymentResult ProcessPayment(ProcessPaymentRequest processPaymentRequest)
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the process payment result
+        /// </returns>
+        public async Task<ProcessPaymentResult> ProcessPaymentAsync(ProcessPaymentRequest processPaymentRequest)
         {
             var customSecurityHeaderType = _payPalSecurityService.GetRequesterCredentials();
             using var payPalApiaaInterfaceClient = _payPalInterfaceService.GetAAService();
             var doExpressCheckoutPaymentResponseType = payPalApiaaInterfaceClient.DoExpressCheckoutPayment(ref customSecurityHeaderType,
-                _payPalRequestService.GetDoExpressCheckoutPaymentRequest(processPaymentRequest));
+                await _payPalRequestService.GetDoExpressCheckoutPaymentRequestAsync(processPaymentRequest));
             _session.Set(Defaults.CheckoutPaymentResponseTypeKey, doExpressCheckoutPaymentResponseType);
 
-            return doExpressCheckoutPaymentResponseType.HandleResponse(new ProcessPaymentResult(),
+            return await doExpressCheckoutPaymentResponseType.HandleResponseAsync(new ProcessPaymentResult(),
             (paymentResult, type) =>
             {
                 paymentResult.NewPaymentStatus =
@@ -80,10 +84,8 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
                 processPaymentRequest.CustomValues[Defaults.PaypalTokenKey].ToString();
                 var paymentInfoType = type.DoExpressCheckoutPaymentResponseDetails.PaymentInfo.FirstOrDefault();
 
-                if (paymentInfoType != null)
-                {
+                if (paymentInfoType != null) 
                     paymentResult.CaptureTransactionId = paymentInfoType.TransactionID;
-                }
 
                 paymentResult.CaptureTransactionResult = type.Ack.ToString();
             },
@@ -99,46 +101,57 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
         /// Post process payment (used by payment gateways that require redirecting to a third-party URL)
         /// </summary>
         /// <param name="postProcessPaymentRequest">Payment info required for an order processing</param>
-        public void PostProcessPayment(PostProcessPaymentRequest postProcessPaymentRequest)
+        /// <returns>A task that represents the asynchronous operation</returns>
+        public Task PostProcessPaymentAsync(PostProcessPaymentRequest postProcessPaymentRequest)
         {
+            return Task.CompletedTask;
         }
 
         /// <summary>
         /// Returns a value indicating whether payment method should be hidden during checkout
         /// </summary>
-        /// <param name="cart">Shoping cart</param>
-        /// <returns>true - hide; false - display.</returns>
-        public bool HidePaymentMethod(IList<ShoppingCartItem> cart)
+        /// <param name="cart">Shopping cart</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the rue - hide; false - display.
+        /// </returns>
+        public Task<bool> HidePaymentMethodAsync(IList<ShoppingCartItem> cart)
         {
             //you can put any logic here
             //for example, hide this payment method if all products in the cart are downloadable
             //or hide this payment method if current customer is from certain country
-            return false;
+            return Task.FromResult(false);
         }
 
         /// <summary>
         /// Gets additional handling fee
         /// </summary>
-        /// <param name="cart">Shoping cart</param>
-        /// <returns>Additional handling fee</returns>
-        public decimal GetAdditionalHandlingFee(IList<ShoppingCartItem> cart)
+        /// <param name="cart">Shopping cart</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the additional handling fee
+        /// </returns>
+        public Task<decimal> GetAdditionalHandlingFeeAsync(IList<ShoppingCartItem> cart)
         {
-            return decimal.Zero;
+            return Task.FromResult(decimal.Zero);
         }
 
         /// <summary>
         /// Captures payment
         /// </summary>
         /// <param name="capturePaymentRequest">Capture payment request</param>
-        /// <returns>Capture payment result</returns>
-        public CapturePaymentResult Capture(CapturePaymentRequest capturePaymentRequest)
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the capture payment result
+        /// </returns>
+        public async Task<CapturePaymentResult> CaptureAsync(CapturePaymentRequest capturePaymentRequest)
         {
             var customSecurityHeaderType = _payPalSecurityService.GetRequesterCredentials();
             using var payPalApiaaInterfaceClient = _payPalInterfaceService.GetAAService();
-            var doCaptureReq = _payPalRequestService.GetDoCaptureRequest(capturePaymentRequest);
+            var doCaptureReq = await _payPalRequestService.GetDoCaptureRequestAsync(capturePaymentRequest);
             var response = payPalApiaaInterfaceClient.DoCapture(ref customSecurityHeaderType, doCaptureReq);
 
-            return response.HandleResponse(new CapturePaymentResult
+            return await response.HandleResponseAsync(new CapturePaymentResult
             {
                 CaptureTransactionId =
                             capturePaymentRequest.Order.CaptureTransactionId
@@ -160,15 +173,18 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
         /// Refunds a payment
         /// </summary>
         /// <param name="refundPaymentRequest">Request</param>
-        /// <returns>Result</returns>
-        public RefundPaymentResult Refund(RefundPaymentRequest refundPaymentRequest)
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the result
+        /// </returns>
+        public async Task<RefundPaymentResult> RefundAsync(RefundPaymentRequest refundPaymentRequest)
         {
             var customSecurityHeaderType = _payPalSecurityService.GetRequesterCredentials();
             using var payPalApiInterfaceClient = _payPalInterfaceService.GetService();
             var response = payPalApiInterfaceClient.RefundTransaction(ref customSecurityHeaderType,
-                _payPalRequestService.GetRefundTransactionRequest(refundPaymentRequest));
+                await _payPalRequestService.GetRefundTransactionRequestAsync(refundPaymentRequest));
 
-            return response.HandleResponse(new RefundPaymentResult(),
+            return await response.HandleResponseAsync(new RefundPaymentResult(),
                 (paymentResult, type) =>
                     paymentResult.NewPaymentStatus = refundPaymentRequest.IsPartialRefund
                         ? PaymentStatus.PartiallyRefunded
@@ -182,8 +198,11 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
         /// Voids a payment
         /// </summary>
         /// <param name="voidPaymentRequest">Request</param>
-        /// <returns>Result</returns>
-        public VoidPaymentResult Void(VoidPaymentRequest voidPaymentRequest)
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the result
+        /// </returns>
+        public async Task<VoidPaymentResult> VoidAsync(VoidPaymentRequest voidPaymentRequest)
         {
             var customSecurityHeaderType = _payPalSecurityService.GetRequesterCredentials();
 
@@ -191,7 +210,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
             var response = payPalApiaaInterfaceClient.DoVoid(ref customSecurityHeaderType,
                 _payPalRequestService.GetVoidRequest(voidPaymentRequest));
 
-            return response.HandleResponse(new VoidPaymentResult(),
+            return await response.HandleResponseAsync(new VoidPaymentResult(),
                 (paymentResult, type) =>
                     paymentResult.NewPaymentStatus = PaymentStatus.Voided,
                 (paymentResult, type) =>
@@ -203,16 +222,19 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
         /// Process recurring payment
         /// </summary>
         /// <param name="processPaymentRequest">Payment info required for an order processing</param>
-        /// <returns>Process payment result</returns>
-        public ProcessPaymentResult ProcessRecurringPayment(ProcessPaymentRequest processPaymentRequest)
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the process payment result
+        /// </returns>
+        public async Task<ProcessPaymentResult> ProcessRecurringPaymentAsync(ProcessPaymentRequest processPaymentRequest)
         {
             using var payPalApiaaInterfaceClient = _payPalInterfaceService.GetAAService();
             var customSecurityHeaderType = _payPalSecurityService.GetRequesterCredentials();
             var response =
                 payPalApiaaInterfaceClient.CreateRecurringPaymentsProfile(ref customSecurityHeaderType,
-                    _payPalRequestService.GetCreateRecurringPaymentsProfileRequest(processPaymentRequest));
+                    await _payPalRequestService.GetCreateRecurringPaymentsProfileRequestAsync(processPaymentRequest));
 
-            return response.HandleResponse(new ProcessPaymentResult(),
+            return await response.HandleResponseAsync(new ProcessPaymentResult(),
                 (paymentResult, type) => paymentResult.NewPaymentStatus = PaymentStatus.Pending,
                 (paymentResult, type) => response.Errors.AddErrors(paymentResult.AddError),
                 processPaymentRequest.OrderGuid);
@@ -222,15 +244,18 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
         /// Cancels a recurring payment
         /// </summary>
         /// <param name="cancelPaymentRequest">Request</param>
-        /// <returns>Result</returns>
-        public CancelRecurringPaymentResult CancelRecurringPayment(CancelRecurringPaymentRequest cancelPaymentRequest)
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the result
+        /// </returns>
+        public async Task<CancelRecurringPaymentResult> CancelRecurringPaymentAsync(CancelRecurringPaymentRequest cancelPaymentRequest)
         {
             var customSecurityHeaderType = _payPalSecurityService.GetRequesterCredentials();
             using var payPalApiaaInterfaceClient = _payPalInterfaceService.GetAAService();
             var response = payPalApiaaInterfaceClient.ManageRecurringPaymentsProfileStatus(ref customSecurityHeaderType,
                 _payPalRequestService.GetCancelRecurringPaymentRequest(cancelPaymentRequest));
 
-            return response.HandleResponse(new CancelRecurringPaymentResult(),
+            return await response.HandleResponseAsync(new CancelRecurringPaymentResult(),
                 (paymentResult, type) => { },
                 (paymentResult, type) => response.Errors.AddErrors(paymentResult.AddError),
                 cancelPaymentRequest.Order.OrderGuid);
@@ -240,42 +265,78 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
         /// Gets a value indicating whether customers can complete a payment after order is placed but not completed (for redirection payment methods)
         /// </summary>
         /// <param name="order">Order</param>
-        /// <returns>Result</returns>
-        public bool CanRePostProcessPayment(Order order)
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the result
+        /// </returns>
+        public Task<bool> CanRePostProcessPaymentAsync(Order order)
         {
-            return false;
+            return Task.FromResult(false);
         }
 
+        /// <summary>
+        /// Gets a configuration page URL
+        /// </summary>
         public override string GetConfigurationPageUrl()
         {
             return $"{_webHelper.GetStoreLocation()}Admin/PaymentPayPalExpressCheckout/Configure";
         }
 
+        /// <summary>
+        /// Gets a name of a view component for displaying plugin in public store ("payment info" checkout step)
+        /// </summary>
+        /// <returns>View component name</returns>
         public string GetPublicViewComponentName()
         {
             return "PaymentPayPalExpressCheckout";
         }
 
-        public IList<string> ValidatePaymentForm(IFormCollection form)
+        /// <summary>
+        /// Validate payment form
+        /// </summary>
+        /// <param name="form">The parsed form values</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the list of validating errors
+        /// </returns>
+        public Task<IList<string>> ValidatePaymentFormAsync(IFormCollection form)
         {
-            return new List<string>();
-        }
-
-        public ProcessPaymentRequest GetPaymentInfo(IFormCollection form)
-        {
-            return new ProcessPaymentRequest();
+            return Task.FromResult<IList<string>>(new List<string>());
         }
 
         /// <summary>
-        /// Install the plugin
+        /// Get payment information
         /// </summary>
-        public override void Install()
+        /// <param name="form">The parsed form values</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the payment info holder
+        /// </returns>
+        public Task<ProcessPaymentRequest> GetPaymentInfoAsync(IFormCollection form)
+        {
+            return Task.FromResult(new ProcessPaymentRequest());
+        }
+
+        /// <summary>
+        /// Gets a payment method description that will be displayed on checkout pages in the public store
+        /// </summary>
+        /// <returns>A task that represents the asynchronous operation</returns>
+        public async Task<string> GetPaymentMethodDescriptionAsync()
+        {
+            return await _localizationService.GetResourceAsync("Plugins.Payments.PayPalExpressCheckout.PaymentMethodDescription");
+        }
+
+        /// <summary>
+        /// Install plugin
+        /// </summary>
+        /// <returns>A task that represents the asynchronous operation</returns>
+        public override async Task InstallAsync()
         {
             //settings
-            _settingService.SaveSetting(new PayPalExpressCheckoutPaymentSettings());
+            await _settingService.SaveSettingAsync(new PayPalExpressCheckoutPaymentSettings());
 
             //locales
-            _localizationService.AddPluginLocaleResource(new Dictionary<string, string>
+            await _localizationService.AddLocaleResourceAsync(new Dictionary<string, string>
             {
                 ["Plugins.Payments.PayPalExpressCheckout.Fields.ApiSignature"] = "API Signature",
                 ["Plugins.Payments.PayPalExpressCheckout.Fields.ApiSignature.Hint"] = "The API Signature specified in your PayPal account.",
@@ -304,22 +365,24 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
                 ["Plugins.Payments.PayPalExpressCheckout.PaymentMethodDescription"] = "Pay by PayPal"
             });
 
-            base.Install();
+            await base.InstallAsync();
         }
 
         /// <summary>
-        /// Uninstall the plugin
+        /// Uninstall plugin
         /// </summary>
-        public override void Uninstall()
+        /// <returns>A task that represents the asynchronous operation</returns>
+        public override async Task UninstallAsync()
         {
             //settings
-            _settingService.DeleteSetting<PayPalExpressCheckoutPaymentSettings>();
+            await _settingService.DeleteSettingAsync<PayPalExpressCheckoutPaymentSettings>();
 
             // locales
-            _localizationService.DeletePluginLocaleResources("Plugins.Payments.PayPalExpressCheckout");
+            await _localizationService.DeleteLocaleResourcesAsync("Plugins.Payments.PayPalExpressCheckout");
 
-            base.Uninstall();
+            await base.UninstallAsync();
         }
+        
 
         #endregion
 
@@ -359,11 +422,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
         /// Gets a value indicating whether we should display a payment information page for this plugin
         /// </summary>
         public bool SkipPaymentInfo => false;
-
-        /// <summary>
-        /// Gets a payment method description that will be displayed on checkout pages in the public store
-        /// </summary>
-        public string PaymentMethodDescription => _localizationService.GetResource("Plugins.Payments.PayPalExpressCheckout.PaymentMethodDescription");
 
         #endregion
     }

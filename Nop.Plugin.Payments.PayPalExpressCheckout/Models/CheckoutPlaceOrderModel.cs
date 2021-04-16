@@ -1,6 +1,6 @@
 ﻿namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
 {
-    public partial class CheckoutPlaceOrderModel : CheckoutConfirmModel
+    public partial record CheckoutPlaceOrderModel : CheckoutConfirmModel
     {
         public bool RedirectToCart { get; set; }
 

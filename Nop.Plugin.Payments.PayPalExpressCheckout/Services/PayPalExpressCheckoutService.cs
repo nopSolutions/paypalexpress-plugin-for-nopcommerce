@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
@@ -35,24 +36,24 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             _orderSettings = orderSettings;
         }
 
-        public IList<ShoppingCartItem> GetCart()
+        public async Task<IList<ShoppingCartItem>> GetCartAsync()
         {
-            return _shoppingCartService.GetShoppingCart(_workContext.CurrentCustomer, ShoppingCartType.ShoppingCart, _storeContext.CurrentStore.Id);
+            return await _shoppingCartService.GetShoppingCartAsync(await _workContext.GetCurrentCustomerAsync(), ShoppingCartType.ShoppingCart, (await _storeContext.GetCurrentStoreAsync()).Id);
         }
 
-        public bool IsAllowedToCheckout()
+        public async Task<bool> IsAllowedToCheckoutAsync()
         {
-            return !(_customerService.IsGuest(_workContext.CurrentCustomer) && !_orderSettings.AnonymousCheckoutAllowed);
+            return !(await _customerService.IsGuestAsync(await _workContext.GetCurrentCustomerAsync()) && !_orderSettings.AnonymousCheckoutAllowed);
         }
 
-        public bool IsMinimumOrderPlacementIntervalValid(Customer customer)
+        public async Task<bool> IsMinimumOrderPlacementIntervalValidAsync(Customer customer)
         {
             //prevent 2 orders being placed within an X seconds time frame
             if (_orderSettings.MinimumOrderPlacementInterval == 0)
                 return true;
 
-            var lastOrder = _orderService.SearchOrders(_storeContext.CurrentStore.Id,
-                customerId: _workContext.CurrentCustomer.Id, pageSize: 1)
+            var lastOrder = (await _orderService.SearchOrdersAsync((await _storeContext.GetCurrentStoreAsync()).Id,
+                customerId: (await _workContext.GetCurrentCustomerAsync()).Id, pageSize: 1))
                 .FirstOrDefault();
             if (lastOrder == null)
                 return true;

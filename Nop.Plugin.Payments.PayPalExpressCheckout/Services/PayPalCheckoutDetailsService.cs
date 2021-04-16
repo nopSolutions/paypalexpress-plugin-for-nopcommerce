@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
@@ -40,15 +41,15 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             _workContext = workContext;
         }
 
-        public ProcessPaymentRequest SetCheckoutDetails(GetExpressCheckoutDetailsResponseDetailsType checkoutDetails)
+        public async Task<ProcessPaymentRequest> SetCheckoutDetailsAsync(GetExpressCheckoutDetailsResponseDetailsType checkoutDetails)
         {
             // get customer & cart
-            var customerId = Convert.ToInt32(_workContext.CurrentCustomer.Id.ToString());
-            var customer = _customerService.GetCustomerById(customerId);
+            var customerId = Convert.ToInt32((await _workContext.GetCurrentCustomerAsync()).Id.ToString());
+            var customer = await _customerService.GetCustomerByIdAsync(customerId);
 
-            _workContext.CurrentCustomer = customer;
+            await _workContext.SetCurrentCustomerAsync(customer);
 
-            var cart = _shoppingCartService.GetShoppingCart(customer, ShoppingCartType.ShoppingCart).ToList();
+            var cart = await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart);
 
             // get/update billing address
             var billingFirstName = checkoutDetails.PayerInfo.PayerName.FirstName;
@@ -59,16 +60,16 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             var billingPhoneNumber = checkoutDetails.PayerInfo.ContactPhone;
             var billingCity = checkoutDetails.PayerInfo.Address.CityName;
             int? billingStateProvinceId = null;
-            var billingStateProvince = _stateProvinceService.GetStateProvinceByAbbreviation(checkoutDetails.PayerInfo.Address.StateOrProvince);
+            var billingStateProvince = await _stateProvinceService.GetStateProvinceByAbbreviationAsync(checkoutDetails.PayerInfo.Address.StateOrProvince);
             if (billingStateProvince != null)
                 billingStateProvinceId = billingStateProvince.Id;
             var billingZipPostalCode = checkoutDetails.PayerInfo.Address.PostalCode;
             int? billingCountryId = null;
-            var billingCountry = _countryService.GetCountryByTwoLetterIsoCode(checkoutDetails.PayerInfo.Address.Country.ToString());
+            var billingCountry = await _countryService.GetCountryByTwoLetterIsoCodeAsync(checkoutDetails.PayerInfo.Address.Country.ToString());
             if (billingCountry != null)
                 billingCountryId = billingCountry.Id;
 
-            var billingAddress = _addressService.FindAddress(_customerService.GetAddressesByCustomerId(_workContext.CurrentCustomer.Id).ToList(),
+            var billingAddress = _addressService.FindAddress((await _customerService.GetAddressesByCustomerIdAsync((await _workContext.GetCurrentCustomerAsync()).Id)).ToList(),
                 billingFirstName, billingLastName, billingPhoneNumber,
                 billingEmail, string.Empty, string.Empty,
                 billingAddress1, billingAddress2, billingCity,
@@ -94,17 +95,17 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                     CreatedOnUtc = DateTime.UtcNow
                 };
 
-                _addressService.InsertAddress(billingAddress);
-                _customerService.InsertCustomerAddress(customer, billingAddress);
+                await _addressService.InsertAddressAsync(billingAddress);
+                await _customerService.InsertCustomerAddressAsync(customer, billingAddress);
             }
 
             //set default billing address
             customer.BillingAddressId = billingAddress.Id;
-            _customerService.UpdateCustomer(customer);
+            await _customerService.UpdateCustomerAsync(customer);
 
-            _genericAttributeService.SaveAttribute<ShippingOption>(customer, NopCustomerDefaults.SelectedShippingOptionAttribute, null, customer.RegisteredInStoreId);
+            await _genericAttributeService.SaveAttributeAsync<ShippingOption>(customer, NopCustomerDefaults.SelectedShippingOptionAttribute, null, customer.RegisteredInStoreId);
 
-            var shoppingCartRequiresShipping = _shoppingCartService.ShoppingCartRequiresShipping(cart);
+            var shoppingCartRequiresShipping = await _shoppingCartService.ShoppingCartRequiresShippingAsync(cart);
             if (shoppingCartRequiresShipping)
             {
                 var paymentDetails = checkoutDetails.PaymentDetails.FirstOrDefault() ?? new PaymentDetailsType();
@@ -120,17 +121,17 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 var shippingPhoneNumber = paymentDetails.ShipToAddress.Phone;
                 var shippingCity = paymentDetails.ShipToAddress.CityName;
                 int? shippingStateProvinceId = null;
-                var shippingStateProvince = _stateProvinceService.GetStateProvinceByAbbreviation(paymentDetails.ShipToAddress.StateOrProvince);
+                var shippingStateProvince = await _stateProvinceService.GetStateProvinceByAbbreviationAsync(paymentDetails.ShipToAddress.StateOrProvince);
                 if (shippingStateProvince != null)
                     shippingStateProvinceId = shippingStateProvince.Id;
                 int? shippingCountryId = null;
                 var shippingZipPostalCode = paymentDetails.ShipToAddress.PostalCode;
                 var shippingCountry =
-                    _countryService.GetCountryByTwoLetterIsoCode(paymentDetails.ShipToAddress.Country.ToString());
+                    await _countryService.GetCountryByTwoLetterIsoCodeAsync(paymentDetails.ShipToAddress.Country.ToString());
                 if (shippingCountry != null)
                     shippingCountryId = shippingCountry.Id;
 
-                var shippingAddress = _addressService.FindAddress(_customerService.GetAddressesByCustomerId(_workContext.CurrentCustomer.Id).ToList(),
+                var shippingAddress = _addressService.FindAddress((await _customerService.GetAddressesByCustomerIdAsync((await _workContext.GetCurrentCustomerAsync()).Id)).ToList(),
                     shippingFirstName, shippingLastName, shippingPhoneNumber,
                     shippingEmail, string.Empty, string.Empty,
                     shippingAddress1, shippingAddress2, shippingCity,
@@ -156,13 +157,13 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                         CreatedOnUtc = DateTime.UtcNow
                     };
 
-                    _addressService.InsertAddress(shippingAddress);
-                    _customerService.InsertCustomerAddress(customer, shippingAddress);
+                    await _addressService.InsertAddressAsync(shippingAddress);
+                    await _customerService.InsertCustomerAddressAsync(customer, shippingAddress);
                 }
 
                 //set default shipping address
                 customer.ShippingAddressId = shippingAddress.Id;
-                _customerService.UpdateCustomer(customer);
+                await _customerService.UpdateCustomerAsync(customer);
             }
 
             var processPaymentRequest = new ProcessPaymentRequest

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
@@ -49,22 +50,22 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             _priceFormatter = priceFormatter;
         }
 
-        public CheckoutShippingMethodModel PrepareShippingMethodModel(IList<ShoppingCartItem> cart)
+        public async Task<CheckoutShippingMethodModel> PrepareShippingMethodModelAsync(IList<ShoppingCartItem> cart)
         {
             var model = new CheckoutShippingMethodModel();
 
-            var shippingAddress = _addressService.GetAddressById(_workContext.CurrentCustomer.ShippingAddressId ?? 0);
+            var shippingAddress = await _addressService.GetAddressByIdAsync((await _workContext.GetCurrentCustomerAsync()).ShippingAddressId ?? 0);
 
-            var getShippingOptionResponse = _shippingService.GetShippingOptions(cart, shippingAddress);
+            var getShippingOptionResponse = await _shippingService.GetShippingOptionsAsync(cart, shippingAddress);
 
             if (getShippingOptionResponse.Success)
             {
                 //performance optimization. cache returned shipping options.
                 //we'll use them later (after a customer has selected an option).
-                _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer,
+                await _genericAttributeService.SaveAttributeAsync(await _workContext.GetCurrentCustomerAsync(),
                     NopCustomerDefaults.OfferedShippingOptionsAttribute,
                     getShippingOptionResponse.ShippingOptions,
-                    _storeContext.CurrentStore.Id);
+                    (_storeContext.GetCurrentStoreAsync()).Id);
 
                 foreach (var shippingOption in getShippingOptionResponse.ShippingOptions)
                 {
@@ -77,19 +78,19 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                     };
 
                     //adjust rate
-                    var shippingTotal = _orderTotalCalculationService.AdjustShippingRate(
-                        shippingOption.Rate, cart, out _);
+                    var (shippingTotal, _) = await _orderTotalCalculationService.AdjustShippingRateAsync(
+                        shippingOption.Rate, cart);
 
-                    var rateBase = _taxService.GetShippingPrice(shippingTotal, _workContext.CurrentCustomer);
+                    var (_, rateBase) = await _taxService.GetShippingPriceAsync(shippingTotal, await _workContext.GetCurrentCustomerAsync());
                     var rate =
-                        _currencyService.ConvertFromPrimaryStoreCurrency(rateBase, _workContext.WorkingCurrency);
-                    soModel.Fee = _priceFormatter.FormatShippingPrice(rate, true);
+                        await _currencyService.ConvertFromPrimaryStoreCurrencyAsync(rateBase, await _workContext.GetWorkingCurrencyAsync());
+                    soModel.Fee = await _priceFormatter.FormatShippingPriceAsync(rate, true);
 
                     model.ShippingMethods.Add(soModel);
                 }
 
                 //find a selected (previously) shipping method
-                var selectedShippingOption = _genericAttributeService.GetAttribute<ShippingOption>(_workContext.CurrentCustomer, NopCustomerDefaults.SelectedShippingOptionAttribute, _storeContext.CurrentStore.Id);
+                var selectedShippingOption = await _genericAttributeService.GetAttributeAsync<ShippingOption>(await _workContext.GetCurrentCustomerAsync(), NopCustomerDefaults.SelectedShippingOptionAttribute, (_storeContext.GetCurrentStoreAsync()).Id);
 
                 CheckoutShippingMethodModel.ShippingMethodModel shippingOptionToSelect;
 
@@ -119,7 +120,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             return model;
         }
 
-        public bool SetShippingMethod(IList<ShoppingCartItem> cart, string shippingoption)
+        public async Task<bool> SetShippingMethodAsync(IList<ShoppingCartItem> cart, string shippingoption)
         {
             //parse selected method 
             if (string.IsNullOrEmpty(shippingoption))
@@ -132,24 +133,22 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
 
             //find it
             //performance optimization. try cache first
-            var shippingOptions = _genericAttributeService.GetAttribute<List<ShippingOption>>(_workContext.CurrentCustomer, NopCustomerDefaults.OfferedShippingOptionsAttribute, _storeContext.CurrentStore.Id);
+            var shippingOptions = await _genericAttributeService.GetAttributeAsync<List<ShippingOption>>(await _workContext.GetCurrentCustomerAsync(), NopCustomerDefaults.OfferedShippingOptionsAttribute, (await _storeContext.GetCurrentStoreAsync()).Id);
             if (shippingOptions == null || shippingOptions.Count == 0)
             {
-                var shippingAddress = _addressService.GetAddressById(_workContext.CurrentCustomer.ShippingAddressId ?? 0);
+                var shippingAddress = await _addressService.GetAddressByIdAsync((await _workContext.GetCurrentCustomerAsync()).ShippingAddressId ?? 0);
 
                 //not found? let's load them using shipping service
-                shippingOptions = _shippingService
-                    .GetShippingOptions(cart, shippingAddress,
-                    allowedShippingRateComputationMethodSystemName: shippingRateComputationMethodSystemName)
+                shippingOptions = (await _shippingService
+                    .GetShippingOptionsAsync(cart, shippingAddress,
+                    allowedShippingRateComputationMethodSystemName: shippingRateComputationMethodSystemName))
                     .ShippingOptions
                     .ToList();
             }
             else
-            {
                 //loaded cached results. let's filter result by a chosen shipping rate computation method
                 shippingOptions = shippingOptions.Where(so => so.ShippingRateComputationMethodSystemName.Equals(shippingRateComputationMethodSystemName, StringComparison.InvariantCultureIgnoreCase))
-                                                 .ToList();
-            }
+                    .ToList();
 
             var shippingOption = shippingOptions
                 .Find(so => !string.IsNullOrEmpty(so.Name) && so.Name.Equals(selectedName, StringComparison.InvariantCultureIgnoreCase));
@@ -157,16 +156,16 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
                 return false;
 
             //save
-            _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer,
-                NopCustomerDefaults.SelectedShippingOptionAttribute, shippingOption, _storeContext.CurrentStore.Id);
+            await _genericAttributeService.SaveAttributeAsync(await _workContext.GetCurrentCustomerAsync(),
+                NopCustomerDefaults.SelectedShippingOptionAttribute, shippingOption, (await _storeContext.GetCurrentStoreAsync()).Id);
 
             return true;
         }
 
-        public void SetShippingMethodToNull()
+        public async Task SetShippingMethodToNullAsync()
         {
-            _genericAttributeService.SaveAttribute<ShippingOption>(_workContext.CurrentCustomer,
-                NopCustomerDefaults.SelectedShippingOptionAttribute, null, _storeContext.CurrentStore.Id);
+            await _genericAttributeService.SaveAttributeAsync<ShippingOption>(await _workContext.GetCurrentCustomerAsync(),
+                NopCustomerDefaults.SelectedShippingOptionAttribute, null, (await _storeContext.GetCurrentStoreAsync()).Id);
         }
     }
 }

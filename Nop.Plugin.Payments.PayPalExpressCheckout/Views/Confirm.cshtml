@@ -13,7 +13,7 @@
         @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.CheckoutConfirmTop })
         <div class="section confirm-order">
             <form asp-controller="PaymentPayPalExpressCheckout" asp-action="Confirm" method="post" id="confirm-order-form">
-                <script type="text/javascript">
+                <script asp-location="Footer" type="text/javascript">
                     $(document).ready(function () {
                         $('#confirm-order-form').submit(function () {
                             $('input[type=submit]', this).attr('disabled', 'disabled');

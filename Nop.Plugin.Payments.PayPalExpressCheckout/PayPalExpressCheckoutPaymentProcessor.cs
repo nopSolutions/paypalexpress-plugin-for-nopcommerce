@@ -336,7 +336,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
             await _settingService.SaveSettingAsync(new PayPalExpressCheckoutPaymentSettings());
 
             //locales
-            await _localizationService.AddLocaleResourceAsync(new Dictionary<string, string>
+            await _localizationService.AddOrUpdateLocaleResourceAsync(new Dictionary<string, string>
             {
                 ["Plugins.Payments.PayPalExpressCheckout.Fields.ApiSignature"] = "API Signature",
                 ["Plugins.Payments.PayPalExpressCheckout.Fields.ApiSignature.Hint"] = "The API Signature specified in your PayPal account.",

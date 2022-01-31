@@ -151,7 +151,7 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
             var transactionId = refundPaymentRequest.Order.CaptureTransactionId;
             var refundType = refundPaymentRequest.IsPartialRefund ? RefundType.Partial : RefundType.Full;
 
-           //get the primary store currency
+            //get the primary store currency
             var currency = await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId);
             if (currency == null)
                 throw new NopException("Primary store currency cannot be loaded");

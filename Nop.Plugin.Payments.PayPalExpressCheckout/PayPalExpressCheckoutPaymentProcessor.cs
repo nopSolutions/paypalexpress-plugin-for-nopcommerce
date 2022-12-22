@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -6,6 +7,7 @@ using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Core.Http.Extensions;
+using Nop.Plugin.Payments.PayPalExpressCheckout.Components;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Helpers;
 using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Services;
@@ -286,9 +288,9 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout
         /// Gets a name of a view component for displaying plugin in public store ("payment info" checkout step)
         /// </summary>
         /// <returns>View component name</returns>
-        public string GetPublicViewComponentName()
+        public Type GetPublicViewComponent()
         {
-            return "PaymentPayPalExpressCheckout";
+            return typeof(PaymentPayPalExpressCheckoutViewComponent);
         }
 
         /// <summary>

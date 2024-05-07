@@ -1,17 +1,15 @@
-﻿using System.Collections.Generic;
-using Nop.Web.Framework.Models;
+﻿using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
+namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models;
+
+public partial record CheckoutConfirmModel : BaseNopModel
 {
-    public partial record CheckoutConfirmModel : BaseNopModel
+    public CheckoutConfirmModel()
     {
-        public CheckoutConfirmModel()
-        {
-            Warnings = new List<string>();
-        }
-
-        public string MinOrderTotalWarning { get; set; }
-
-        public IList<string> Warnings { get; set; }
+        Warnings = new List<string>();
     }
+
+    public string MinOrderTotalWarning { get; set; }
+
+    public IList<string> Warnings { get; set; }
 }

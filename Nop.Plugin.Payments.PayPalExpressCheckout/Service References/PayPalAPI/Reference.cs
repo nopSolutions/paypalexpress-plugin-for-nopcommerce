@@ -29028,26 +29028,12 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
     public partial class PayPalAPIInterfaceClient : System.ServiceModel.ClientBase<Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI.PayPalAPIInterface>, Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI.PayPalAPIInterface {
-        
-        public PayPalAPIInterfaceClient() {
+
+        public PayPalAPIInterfaceClient(System.ServiceModel.Channels.Binding binding, System.ServiceModel.EndpointAddress remoteAddress) :
+            base(binding, remoteAddress)
+        {
         }
-        
-        public PayPalAPIInterfaceClient(string endpointConfigurationName) : 
-                base(endpointConfigurationName) {
-        }
-        
-        public PayPalAPIInterfaceClient(string endpointConfigurationName, string remoteAddress) : 
-                base(endpointConfigurationName, remoteAddress) {
-        }
-        
-        public PayPalAPIInterfaceClient(string endpointConfigurationName, System.ServiceModel.EndpointAddress remoteAddress) : 
-                base(endpointConfigurationName, remoteAddress) {
-        }
-        
-        public PayPalAPIInterfaceClient(System.ServiceModel.Channels.Binding binding, System.ServiceModel.EndpointAddress remoteAddress) : 
-                base(binding, remoteAddress) {
-        }
-        
+
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
         Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI.RefundTransactionResponse Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI.PayPalAPIInterface.RefundTransaction(Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI.RefundTransactionRequest request) {
             return base.Channel.RefundTransaction(request);
@@ -32317,18 +32303,6 @@ namespace Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI {
     public partial class PayPalAPIAAInterfaceClient : System.ServiceModel.ClientBase<Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI.PayPalAPIAAInterface>, Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI.PayPalAPIAAInterface {
         
         public PayPalAPIAAInterfaceClient() {
-        }
-        
-        public PayPalAPIAAInterfaceClient(string endpointConfigurationName) : 
-                base(endpointConfigurationName) {
-        }
-        
-        public PayPalAPIAAInterfaceClient(string endpointConfigurationName, string remoteAddress) : 
-                base(endpointConfigurationName, remoteAddress) {
-        }
-        
-        public PayPalAPIAAInterfaceClient(string endpointConfigurationName, System.ServiceModel.EndpointAddress remoteAddress) : 
-                base(endpointConfigurationName, remoteAddress) {
         }
         
         public PayPalAPIAAInterfaceClient(System.ServiceModel.Channels.Binding binding, System.ServiceModel.EndpointAddress remoteAddress) : 

@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Nop.Core;
+﻿using Nop.Core;
 using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Helpers;
@@ -10,214 +7,213 @@ using Nop.Services.Catalog;
 using Nop.Services.Directory;
 using Nop.Services.Payments;
 
-namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services
+namespace Nop.Plugin.Payments.PayPalExpressCheckout.Services;
+
+public class PayPalRequestService
 {
-    public class PayPalRequestService
+    private readonly ICurrencyService _currencyService;
+    private readonly CurrencySettings _currencySettings;
+    private readonly IProductService _productService;
+    private readonly IWorkContext _workContext;
+    private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
+    private readonly PayPalCurrencyCodeParser _payPalCurrencyCodeParser;
+    private readonly PayPalOrderService _payPalOrderService;
+    private readonly PayPalRecurringPaymentsService _payPalRecurringPaymentsService;
+    private readonly PayPalUrlService _payPalUrlService;
+
+    public PayPalRequestService(ICurrencyService currencyService,
+        CurrencySettings currencySettings,
+        IProductService productService,
+        IWorkContext workContext,
+        PayPalCurrencyCodeParser payPalCurrencyCodeParser,
+        PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings,
+        PayPalOrderService payPalOrderService,
+        PayPalRecurringPaymentsService payPalRecurringPaymentsService,
+        PayPalUrlService payPalUrlService)
     {
-        private readonly ICurrencyService _currencyService;
-        private readonly CurrencySettings _currencySettings;
-        private readonly IProductService _productService;
-        private readonly IWorkContext _workContext;
-        private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
-        private readonly PayPalCurrencyCodeParser _payPalCurrencyCodeParser;
-        private readonly PayPalOrderService _payPalOrderService;
-        private readonly PayPalRecurringPaymentsService _payPalRecurringPaymentsService;
-        private readonly PayPalUrlService _payPalUrlService;
+        _currencyService = currencyService;
+        _currencySettings = currencySettings;
+        _productService = productService;
+        _workContext = workContext;
+        _payPalCurrencyCodeParser = payPalCurrencyCodeParser;
+        _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
+        _payPalOrderService = payPalOrderService;
+        _payPalRecurringPaymentsService = payPalRecurringPaymentsService;
+        _payPalUrlService = payPalUrlService;
+    }
 
-        public PayPalRequestService(ICurrencyService currencyService,
-            CurrencySettings currencySettings,
-            IProductService productService,
-            IWorkContext workContext,
-            PayPalCurrencyCodeParser payPalCurrencyCodeParser,
-            PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings,
-            PayPalOrderService payPalOrderService,
-            PayPalRecurringPaymentsService payPalRecurringPaymentsService,
-            PayPalUrlService payPalUrlService)
-        {
-            _currencyService = currencyService;
-            _currencySettings = currencySettings;
-            _productService = productService;
-            _workContext = workContext;
-            _payPalCurrencyCodeParser = payPalCurrencyCodeParser;
-            _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
-            _payPalOrderService = payPalOrderService;
-            _payPalRecurringPaymentsService = payPalRecurringPaymentsService;
-            _payPalUrlService = payPalUrlService;
-        }
+    public async Task<SetExpressCheckoutRequestDetailsType> GetSetExpressCheckoutRequestDetailsAsync(IList<ShoppingCartItem> cart)
+    {
+        var noShippingCart = await cart.AnyAwaitAsync(async item => (await _productService.GetProductByIdAsync(item.ProductId))?.IsDownload != true);
 
-        public async Task<SetExpressCheckoutRequestDetailsType> GetSetExpressCheckoutRequestDetailsAsync(IList<ShoppingCartItem> cart)
-        {
-            var noShippingCart = await cart.AnyAwaitAsync(async item => (await _productService.GetProductByIdAsync(item.ProductId))?.IsDownload != true);
-
-            var setExpressCheckoutRequestDetailsType =
-                new SetExpressCheckoutRequestDetailsType
-                {
-                    ReturnURL = _payPalUrlService.GetReturnURL(),
-                    CancelURL = _payPalUrlService.GetCancelURL(),
-                    ReqConfirmShipping = noShippingCart || !_payPalExpressCheckoutPaymentSettings.RequireConfirmedShippingAddress ? "0" : "1",
-                    NoShipping = noShippingCart ? "2" : "1",
-                    LocaleCode = _payPalExpressCheckoutPaymentSettings.LocaleCode,
-                    cppheaderimage = _payPalExpressCheckoutPaymentSettings.LogoImageURL,
-                    cppcartbordercolor = _payPalExpressCheckoutPaymentSettings.CartBorderColor,
-                    PaymentDetails = await _payPalOrderService.GetPaymentDetailsAsync(cart),
-                    BuyerEmail = await _payPalOrderService.GetBuyerEmailAsync(),
-                    MaxAmount = await _payPalOrderService.GetMaxAmountAsync(cart)
-                };
-
-            return setExpressCheckoutRequestDetailsType;
-        }
-
-        public async Task<SetExpressCheckoutReq> GetSetExpressCheckoutRequestAsync(IList<ShoppingCartItem> shoppingCartItems)
-        {
-            var setExpressCheckoutRequestDetailsType = await GetSetExpressCheckoutRequestDetailsAsync(shoppingCartItems);
-            var setExpressCheckoutRequestType = new SetExpressCheckoutRequestType
+        var setExpressCheckoutRequestDetailsType =
+            new SetExpressCheckoutRequestDetailsType
             {
-                SetExpressCheckoutRequestDetails = setExpressCheckoutRequestDetailsType,
+                ReturnURL = _payPalUrlService.GetReturnURL(),
+                CancelURL = _payPalUrlService.GetCancelURL(),
+                ReqConfirmShipping = noShippingCart || !_payPalExpressCheckoutPaymentSettings.RequireConfirmedShippingAddress ? "0" : "1",
+                NoShipping = noShippingCart ? "2" : "1",
+                LocaleCode = _payPalExpressCheckoutPaymentSettings.LocaleCode,
+                cppheaderimage = _payPalExpressCheckoutPaymentSettings.LogoImageURL,
+                cppcartbordercolor = _payPalExpressCheckoutPaymentSettings.CartBorderColor,
+                PaymentDetails = await _payPalOrderService.GetPaymentDetailsAsync(cart),
+                BuyerEmail = await _payPalOrderService.GetBuyerEmailAsync(),
+                MaxAmount = await _payPalOrderService.GetMaxAmountAsync(cart)
+            };
+
+        return setExpressCheckoutRequestDetailsType;
+    }
+
+    public async Task<SetExpressCheckoutReq> GetSetExpressCheckoutRequestAsync(IList<ShoppingCartItem> shoppingCartItems)
+    {
+        var setExpressCheckoutRequestDetailsType = await GetSetExpressCheckoutRequestDetailsAsync(shoppingCartItems);
+        var setExpressCheckoutRequestType = new SetExpressCheckoutRequestType
+        {
+            SetExpressCheckoutRequestDetails = setExpressCheckoutRequestDetailsType,
+            Version = GetVersion()
+        };
+
+        return new SetExpressCheckoutReq { SetExpressCheckoutRequest = setExpressCheckoutRequestType };
+    }
+
+    public string GetVersion()
+    {
+        return "98.0";
+    }
+
+    public GetExpressCheckoutDetailsReq GetGetExpressCheckoutDetailsRequest(string token)
+    {
+        return new()
+        {
+            GetExpressCheckoutDetailsRequest = new GetExpressCheckoutDetailsRequestType
+            {
+                Token = token,
                 Version = GetVersion()
-            };
+            }
+        };
+    }
 
-            return new SetExpressCheckoutReq { SetExpressCheckoutRequest = setExpressCheckoutRequestType };
-        }
+    public async Task<DoExpressCheckoutPaymentReq> GetDoExpressCheckoutPaymentRequestAsync(ProcessPaymentRequest processPaymentRequest)
+    {
+        // populate payment details
+        var currencyCodeType = _payPalCurrencyCodeParser.GetCurrencyCodeType(await _workContext.GetWorkingCurrencyAsync());
 
-        public string GetVersion()
+        var paymentDetails = new PaymentDetailsType
         {
-            return "98.0";
-        }
+            OrderTotal = await processPaymentRequest.OrderTotal.GetBasicAmountTypeAsync(currencyCodeType),
+            Custom = processPaymentRequest.OrderGuid.ToString(),
+            ButtonSource = PayPalHelper.BnCode,
+            InvoiceID = processPaymentRequest.OrderGuid.ToString()
+        };
 
-        public GetExpressCheckoutDetailsReq GetGetExpressCheckoutDetailsRequest(string token)
+        // build the request
+        return new DoExpressCheckoutPaymentReq
         {
-            return new()
+            DoExpressCheckoutPaymentRequest = new DoExpressCheckoutPaymentRequestType
             {
-                GetExpressCheckoutDetailsRequest = new GetExpressCheckoutDetailsRequestType
+                Version = GetVersion(),
+                DoExpressCheckoutPaymentRequestDetails = new DoExpressCheckoutPaymentRequestDetailsType
                 {
-                    Token = token,
-                    Version = GetVersion()
+                    Token = processPaymentRequest.CustomValues[Defaults.PaypalTokenKey].ToString(),
+                    PayerID = processPaymentRequest.CustomValues[Defaults.PaypalPayerIdKey].ToString(),
+                    PaymentAction = _payPalExpressCheckoutPaymentSettings.PaymentAction,
+                    PaymentActionSpecified = true,
+                    ButtonSource = PayPalHelper.BnCode,
+                    PaymentDetails = new[] { paymentDetails }
                 }
-            };
-        }
+            }
+        };
+    }
 
-        public async Task<DoExpressCheckoutPaymentReq> GetDoExpressCheckoutPaymentRequestAsync(ProcessPaymentRequest processPaymentRequest)
+    public async Task<DoCaptureReq> GetDoCaptureRequestAsync(CapturePaymentRequest capturePaymentRequest)
+    {
+        var currencyCodeType =
+            _payPalCurrencyCodeParser.GetCurrencyCodeType(capturePaymentRequest.Order.CustomerCurrencyCode);
+        return new DoCaptureReq
         {
-            // populate payment details
-            var currencyCodeType = _payPalCurrencyCodeParser.GetCurrencyCodeType(await _workContext.GetWorkingCurrencyAsync());
-
-            var paymentDetails = new PaymentDetailsType
+            DoCaptureRequest = new DoCaptureRequestType
             {
-                OrderTotal = await processPaymentRequest.OrderTotal.GetBasicAmountTypeAsync(currencyCodeType),
-                Custom = processPaymentRequest.OrderGuid.ToString(),
-                ButtonSource = PayPalHelper.BnCode,
-                InvoiceID = processPaymentRequest.OrderGuid.ToString()
-            };
+                Amount = await capturePaymentRequest.Order.OrderTotal.GetBasicAmountTypeAsync(currencyCodeType),
+                AuthorizationID = capturePaymentRequest.Order.CaptureTransactionId,
+                CompleteType = CompleteCodeType.Complete,
+                InvoiceID = capturePaymentRequest.Order.OrderGuid.ToString(),
+                Version = GetVersion(),
+                MsgSubID = capturePaymentRequest.Order.Id + "-capture"
+            }
+        };
+    }
 
-            // build the request
-            return new DoExpressCheckoutPaymentReq
-            {
-                DoExpressCheckoutPaymentRequest = new DoExpressCheckoutPaymentRequestType
-                {
-                    Version = GetVersion(),
-                    DoExpressCheckoutPaymentRequestDetails = new DoExpressCheckoutPaymentRequestDetailsType
-                    {
-                        Token = processPaymentRequest.CustomValues[Defaults.PaypalTokenKey].ToString(),
-                        PayerID = processPaymentRequest.CustomValues[Defaults.PaypalPayerIdKey].ToString(),
-                        PaymentAction = _payPalExpressCheckoutPaymentSettings.PaymentAction,
-                        PaymentActionSpecified = true,
-                        ButtonSource = PayPalHelper.BnCode,
-                        PaymentDetails = new[] { paymentDetails }
-                    }
-                }
-            };
-        }
+    public async Task<RefundTransactionReq> GetRefundTransactionRequestAsync(RefundPaymentRequest refundPaymentRequest)
+    {
+        var transactionId = refundPaymentRequest.Order.CaptureTransactionId;
+        var refundType = refundPaymentRequest.IsPartialRefund ? RefundType.Partial : RefundType.Full;
 
-        public async Task<DoCaptureReq> GetDoCaptureRequestAsync(CapturePaymentRequest capturePaymentRequest)
+        //get the primary store currency
+        var currency = await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId);
+        if (currency == null)
+            throw new NopException("Primary store currency cannot be loaded");
+
+        var currencyCodeType = _payPalCurrencyCodeParser.GetCurrencyCodeType(currency.CurrencyCode);
+        return new RefundTransactionReq
         {
-            var currencyCodeType =
-                _payPalCurrencyCodeParser.GetCurrencyCodeType(capturePaymentRequest.Order.CustomerCurrencyCode);
-            return new DoCaptureReq
+            RefundTransactionRequest = new RefundTransactionRequestType
             {
-                DoCaptureRequest = new DoCaptureRequestType
-                {
-                    Amount = await capturePaymentRequest.Order.OrderTotal.GetBasicAmountTypeAsync(currencyCodeType),
-                    AuthorizationID = capturePaymentRequest.Order.CaptureTransactionId,
-                    CompleteType = CompleteCodeType.Complete,
-                    InvoiceID = capturePaymentRequest.Order.OrderGuid.ToString(),
-                    Version = GetVersion(),
-                    MsgSubID = capturePaymentRequest.Order.Id + "-capture"
-                }
-            };
-        }
+                RefundType = refundType,
+                RefundTypeSpecified = true,
+                Version = GetVersion(),
+                TransactionID = transactionId,
+                Amount = await refundPaymentRequest.AmountToRefund.GetBasicAmountTypeAsync(currencyCodeType),
+                MsgSubID = $"{refundPaymentRequest.Order.Id}-{refundPaymentRequest.IsPartialRefund}-{refundPaymentRequest.AmountToRefund:0.00}"
+            }
+        };
+    }
 
-        public async Task<RefundTransactionReq> GetRefundTransactionRequestAsync(RefundPaymentRequest refundPaymentRequest)
+    public DoVoidReq GetVoidRequest(VoidPaymentRequest voidPaymentRequest)
+    {
+        var transactionId = voidPaymentRequest.Order.CaptureTransactionId;
+        if (string.IsNullOrEmpty(transactionId))
+            transactionId = voidPaymentRequest.Order.AuthorizationTransactionId;
+
+        return new DoVoidReq
         {
-            var transactionId = refundPaymentRequest.Order.CaptureTransactionId;
-            var refundType = refundPaymentRequest.IsPartialRefund ? RefundType.Partial : RefundType.Full;
-
-            //get the primary store currency
-            var currency = await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId);
-            if (currency == null)
-                throw new NopException("Primary store currency cannot be loaded");
-
-            var currencyCodeType = _payPalCurrencyCodeParser.GetCurrencyCodeType(currency.CurrencyCode);
-            return new RefundTransactionReq
+            DoVoidRequest = new DoVoidRequestType
             {
-                RefundTransactionRequest = new RefundTransactionRequestType
-                {
-                    RefundType = refundType,
-                    RefundTypeSpecified = true,
-                    Version = GetVersion(),
-                    TransactionID = transactionId,
-                    Amount = await refundPaymentRequest.AmountToRefund.GetBasicAmountTypeAsync(currencyCodeType),
-                    MsgSubID = $"{refundPaymentRequest.Order.Id}-{refundPaymentRequest.IsPartialRefund}-{refundPaymentRequest.AmountToRefund:0.00}"
-                }
-            };
-        }
+                Version = GetVersion(),
+                AuthorizationID = transactionId,
+                MsgSubID = voidPaymentRequest.Order.Id + "-void"
+            }
+        };
+    }
 
-        public DoVoidReq GetVoidRequest(VoidPaymentRequest voidPaymentRequest)
+    public async Task<CreateRecurringPaymentsProfileReq> GetCreateRecurringPaymentsProfileRequestAsync(
+        ProcessPaymentRequest processPaymentRequest)
+    {
+        var req = new CreateRecurringPaymentsProfileReq
         {
-            var transactionId = voidPaymentRequest.Order.CaptureTransactionId;
-            if (string.IsNullOrEmpty(transactionId))
-                transactionId = voidPaymentRequest.Order.AuthorizationTransactionId;
-
-            return new DoVoidReq
+            CreateRecurringPaymentsProfileRequest = new CreateRecurringPaymentsProfileRequestType
             {
-                DoVoidRequest = new DoVoidRequestType
-                {
-                    Version = GetVersion(),
-                    AuthorizationID = transactionId,
-                    MsgSubID = voidPaymentRequest.Order.Id + "-void"
-                }
-            };
-        }
+                Version = GetVersion(),
+                CreateRecurringPaymentsProfileRequestDetails = await _payPalRecurringPaymentsService.GetCreateRecurringPaymentProfileRequestDetailsAsync(processPaymentRequest)
+            }
+        };
 
-        public async Task<CreateRecurringPaymentsProfileReq> GetCreateRecurringPaymentsProfileRequestAsync(
-            ProcessPaymentRequest processPaymentRequest)
+        return req;
+    }
+
+    public ManageRecurringPaymentsProfileStatusReq GetCancelRecurringPaymentRequest(
+        CancelRecurringPaymentRequest cancelRecurringPaymentRequest)
+    {
+        return new()
         {
-            var req = new CreateRecurringPaymentsProfileReq
+            ManageRecurringPaymentsProfileStatusRequest = new ManageRecurringPaymentsProfileStatusRequestType
             {
-                CreateRecurringPaymentsProfileRequest = new CreateRecurringPaymentsProfileRequestType
+                Version = GetVersion(),
+                ManageRecurringPaymentsProfileStatusRequestDetails = new ManageRecurringPaymentsProfileStatusRequestDetailsType
                 {
-                    Version = GetVersion(),
-                    CreateRecurringPaymentsProfileRequestDetails = await _payPalRecurringPaymentsService.GetCreateRecurringPaymentProfileRequestDetailsAsync(processPaymentRequest)
+                    Action = StatusChangeActionType.Cancel,
+                    ProfileID = cancelRecurringPaymentRequest.Order.OrderGuid.ToString()
                 }
-            };
-
-            return req;
-        }
-
-        public ManageRecurringPaymentsProfileStatusReq GetCancelRecurringPaymentRequest(
-            CancelRecurringPaymentRequest cancelRecurringPaymentRequest)
-        {
-            return new()
-            {
-                ManageRecurringPaymentsProfileStatusRequest = new ManageRecurringPaymentsProfileStatusRequestType
-                {
-                    Version = GetVersion(),
-                    ManageRecurringPaymentsProfileStatusRequestDetails = new ManageRecurringPaymentsProfileStatusRequestDetailsType
-                    {
-                        Action = StatusChangeActionType.Cancel,
-                        ProfileID = cancelRecurringPaymentRequest.Order.OrderGuid.ToString()
-                    }
-                }
-            };
-        }
+            }
+        };
     }
 }

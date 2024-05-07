@@ -1,20 +1,18 @@
-﻿using System.Collections.Generic;
-using Nop.Web.Framework.Models;
+﻿using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
+namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models;
+
+public partial record CheckoutShippingAddressModel : BaseNopModel
 {
-    public partial record CheckoutShippingAddressModel : BaseNopModel
+    public CheckoutShippingAddressModel()
     {
-        public CheckoutShippingAddressModel()
-        {
-            ExistingAddresses = new List<AddressModel>();
-            NewAddress = new AddressModel();
-        }
-
-        public IList<AddressModel> ExistingAddresses { get; set; }
-
-        public AddressModel NewAddress { get; set; }
-
-        public bool NewAddressPreselected { get; set; }
+        ExistingAddresses = new List<AddressModel>();
+        NewAddress = new AddressModel();
     }
+
+    public IList<AddressModel> ExistingAddresses { get; set; }
+
+    public AddressModel NewAddress { get; set; }
+
+    public bool NewAddressPreselected { get; set; }
 }

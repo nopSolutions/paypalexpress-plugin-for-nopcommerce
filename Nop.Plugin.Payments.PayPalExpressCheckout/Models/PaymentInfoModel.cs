@@ -1,9 +1,8 @@
 ﻿using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models
+namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models;
+
+public record PaymentInfoModel : BaseNopModel
 {
-    public record PaymentInfoModel : BaseNopModel
-    {
-        public string ButtonImageLocation { get; set; }
-    }
+    public string ButtonImageLocation { get; set; }
 }

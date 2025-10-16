@@ -2,7 +2,7 @@
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models;
 
-public partial record CheckoutShippingAddressModel : BaseNopModel
+public record CheckoutShippingAddressModel : BaseNopModel
 {
     public CheckoutShippingAddressModel()
     {

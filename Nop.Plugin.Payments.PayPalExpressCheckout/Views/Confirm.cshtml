@@ -1,22 +1,29 @@
 ﻿@model CheckoutConfirmModel
+
 @{
     Layout = "~/Views/Shared/_ColumnsOne.cshtml";
 
     //title
     NopHtml.AddTitleParts(T("PageTitle.Checkout").Text);
+    //page class
+    NopHtml.AppendPageCssClassParts("html-checkout-page");
+    NopHtml.AppendPageCssClassParts("html-order-confirm-page");
 }
-<div class="page checkout-page">
+<div class="page checkout-page order-confirm-page">
     <div class="page-title">
         <h1>@T("Checkout.ConfirmYourOrder")</h1>
     </div>
     <div class="page-body checkout-data">
-        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.CheckoutConfirmTop })
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.CheckoutConfirmTop, additionalData = Model })
         <div class="section confirm-order">
             <form asp-controller="PaymentPayPalExpressCheckout" asp-action="Confirm" method="post" id="confirm-order-form">
-                <script asp-location="Footer" type="text/javascript">
-                    $(document).ready(function () {
-                        $('#confirm-order-form').submit(function () {
-                            $('input[type=submit]', this).attr('disabled', 'disabled');
+                <script asp-location="Footer">
+                    $(function () {
+                        $('#confirm-order-form').on('submit', function () {
+                            var button = $(this).find('button[type="submit"][name="nextstep"]');
+                            setTimeout(function () {
+                                button.prop('disabled', true);
+                            }, 0);
                         });
                     });
                 </script>
@@ -30,7 +37,7 @@
                         <input type="submit" name="nextstep" value="@T("Checkout.ConfirmButton")" class="button-1 confirm-order-next-step-button" />
                     </div>
                 }
-                @if (Model.Warnings.Count > 0)
+                @if (Model.Warnings.Any())
                 {
                     <div class="message-error">
                         <ul>
@@ -43,9 +50,9 @@
                 }
             </form>
         </div>
-        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.CheckoutConfirmBottom })
+        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.CheckoutConfirmBottom, additionalData = Model })
         <div class="order-summary-body">
-            @await Component.InvokeAsync("OrderSummary", new { prepareAndDisplayOrderReviewData = true })
+            @await Component.InvokeAsync(typeof(OrderSummaryViewComponent), new { prepareAndDisplayOrderReviewData = true })
         </div>
     </div>
 </div>

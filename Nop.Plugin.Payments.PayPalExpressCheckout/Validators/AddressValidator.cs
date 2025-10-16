@@ -1,11 +1,12 @@
 ﻿using FluentValidation;
 using Nop.Core.Domain.Common;
+using Nop.Plugin.Payments.PayPalExpressCheckout.Models;
 using Nop.Services.Localization;
 using Nop.Web.Framework.Validators;
 
-namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models;
+namespace Nop.Plugin.Payments.PayPalExpressCheckout.Validators;
 
-public class AddressValidator : AbstractValidator<AddressModel>
+public class AddressValidator : BaseNopValidator<AddressModel>
 {
     public AddressValidator(ILocalizationService localizationService, AddressSettings addressSettings)
     {

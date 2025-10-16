@@ -10,15 +10,20 @@ using Nop.Web.Framework.Components;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Components;
 
-[ViewComponent(Name = "PaymentPayPalExpressCheckout")]
 public class PaymentPayPalExpressCheckoutViewComponent : NopViewComponent
 {
+    #region Fields
+
     private readonly AddressSettings _addressSettings;
     private readonly IAddressService _addressService;
     private readonly IOrderProcessingService _orderProcessingService;
     private readonly IPaymentPluginManager _paymentPluginManager;
     private readonly IWorkContext _workContext;
     private readonly PayPalExpressCheckoutService _payPalExpressCheckoutService;
+
+    #endregion
+
+    #region Ctor
 
     public PaymentPayPalExpressCheckoutViewComponent(AddressSettings addressSettings,
         IAddressService addressService,
@@ -35,10 +40,21 @@ public class PaymentPayPalExpressCheckoutViewComponent : NopViewComponent
         _payPalExpressCheckoutService = payPalExpressCheckoutService;
     }
 
+    #endregion
+
+    #region Methods
+
+    /// <summary>
+    /// Invoke view component
+    /// </summary>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the view component result
+    /// </returns>
     public async Task<IViewComponentResult> InvokeAsync()
     {
         var cart = await _payPalExpressCheckoutService.GetCartAsync();
-        if (cart.Count == 0)
+        if (!cart.Any())
             return Content(string.Empty);
 
         if (!await _orderProcessingService.ValidateMinOrderSubtotalAmountAsync(cart))
@@ -50,9 +66,8 @@ public class PaymentPayPalExpressCheckoutViewComponent : NopViewComponent
         if (_addressSettings.CountryEnabled && billingAddress?.CountryId != null)
             filterByCountryId = billingAddress.CountryId.Value;
 
-        var plugin = await _paymentPluginManager.LoadPluginBySystemNameAsync("Payments.PayPalExpressCheckout");
-
-        if (plugin == null || (await _paymentPluginManager.GetRestrictedCountryIdsAsync(plugin)).Contains(filterByCountryId))
+        var plugin = await _paymentPluginManager.LoadPluginBySystemNameAsync(Defaults.SystemName);
+        if (plugin is null || (await _paymentPluginManager.GetRestrictedCountryIdsAsync(plugin)).Contains(filterByCountryId))
             return Content(string.Empty);
 
         var model = new PaymentInfoModel
@@ -62,4 +77,6 @@ public class PaymentPayPalExpressCheckoutViewComponent : NopViewComponent
 
         return View("~/Plugins/Payments.PayPalExpressCheckout/Views/PaymentInfo.cshtml", model);
     }
+
+    #endregion
 }

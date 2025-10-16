@@ -4,7 +4,7 @@ using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models;
 
-public partial record AddressModel : BaseNopEntityModel
+public record AddressModel : BaseNopEntityModel
 {
     public AddressModel()
     {

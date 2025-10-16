@@ -3,13 +3,14 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Nop.Core.Infrastructure;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Services;
+using Nop.Web.Framework.Infrastructure.Extensions;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Infrastructure;
 
 /// <summary>
 /// Represents object for the configuring services on application startup
 /// </summary>
-public partial class PluginNopStartup : INopStartup
+public class PluginNopStartup : INopStartup
 {
     /// <summary>
     /// Add and configure any of the middleware
@@ -18,21 +19,10 @@ public partial class PluginNopStartup : INopStartup
     /// <param name="configuration">Configuration of the application</param>
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
-        services.AddScoped<PayPalCartItemService>();
-        services.AddScoped<PayPalCurrencyCodeParser>();
-        services.AddScoped<PayPalInterfaceService>();
-        services.AddScoped<PayPalOrderService>();
-        services.AddScoped<PayPalRequestService>();
-        services.AddScoped<PayPalSecurityService>();
-        services.AddScoped<PayPalUrlService>();
-        services.AddScoped<PayPalCheckoutDetailsService>();
-        services.AddScoped<PayPalRecurringPaymentsService>();
-        services.AddScoped<PayPalExpressCheckoutConfirmOrderService>();
-        services.AddScoped<PayPalExpressCheckoutPlaceOrderService>();
+        //client to request PayPal services
+        services.AddHttpClient<PayPalExpressCheckoutHttpClient>().WithProxy();
+
         services.AddScoped<PayPalExpressCheckoutService>();
-        services.AddScoped<PayPalExpressCheckoutShippingMethodService>();
-        services.AddScoped<PayPalRecurringPaymentsService>();
-        services.AddScoped<PayPalRedirectionService>();
         services.AddScoped<PayPalIPNService>();
     }
 

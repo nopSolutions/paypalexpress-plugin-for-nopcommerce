@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
+﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Web.Framework.Models;
+using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models;
@@ -14,6 +15,8 @@ public record ConfigurationModel : BaseNopModel
     public string Username { get; set; }
 
     [NopResourceDisplayName("Plugins.Payments.PayPalExpressCheckout.Fields.Password")]
+    [NoTrim]
+    [DataType(DataType.Password)]
     public string Password { get; set; }
 
     [NopResourceDisplayName("Plugins.Payments.PayPalExpressCheckout.Fields.IsLive")]
@@ -38,13 +41,14 @@ public record ConfigurationModel : BaseNopModel
     public bool RequireConfirmedShippingAddress { get; set; }
 
     [NopResourceDisplayName("Plugins.Payments.PayPalExpressCheckout.Fields.PaymentAction")]
-    public PaymentActionCodeType PaymentAction { get; set; }
+    public int PaymentActionId { get; set; }
 
     [NopResourceDisplayName("Plugins.Payments.PayPalExpressCheckout.Fields.EnableDebugLogging")]
     public bool EnableDebugLogging { get; set; }
 
-    public IEnumerable<SelectListItem> PaymentActionOptions { get; set; }
+    public List<SelectListItem> PaymentActionOptions { get; set; } = new();
 
-    public IEnumerable<SelectListItem> LocaleOptions { get; set; }
+    public List<SelectListItem> LocaleOptions { get; set; } = new();
 
+    public bool IsActive { get; set; }
 }

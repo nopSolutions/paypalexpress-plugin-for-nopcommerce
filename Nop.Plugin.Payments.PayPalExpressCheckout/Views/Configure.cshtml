@@ -1,17 +1,24 @@
-﻿@{
+﻿@model ConfigurationModel
+
+@{
     Layout = "_ConfigurePlugin";
+
+    var warning = "<b>Please note:</b> The PayPal Express payment plugin is deprecated by PayPal. We strongly recommend upgrading to <b>PayPal Commerce</b> to avoid disruption. All the PayPal Express features and many more updates are now available for the <a href=\"https://www.nopcommerce.com/paypal-commerce-the-official-integration\" target=\"_blank\">PayPal Commerce plugin by nopCommerce</a>. Use our <a href=\"https://docs.nopcommerce.com/en/getting-started/configure-payments/payment-methods/paypal-commerce.html\" target=\"_blank\">step-by-step guide</a> to configure PayPal Commerce.";
 }
-@model ConfigurationModel
 
 <form asp-controller="PaymentPayPalExpressCheckout" asp-action="Configure" method="post">
-    @Html.ValidationSummary()
+    <div asp-validation-summary="All"></div>
     <div class="cards-group">
         <div class="card card-default">
 
-            <script type="text/javascript">
-                $(document).ready(function () {
-                    $("#@Html.IdFor(model => model.DoNotHaveBusinessAccount)").change(changeBusinessAccount);
+            <script>
+                $(function () {
+                    $('#@Html.IdFor(model => model.DoNotHaveBusinessAccount)').change(changeBusinessAccount);
                     changeBusinessAccount();
+                    const isActive = @Model.IsActive.ToString().ToLower();
+                    if (isActive) {
+                        displayBarNotification('@Html.Raw(warning)', 2);
+                    }
                 });
 
                 function changeBusinessAccount() {
@@ -30,6 +37,10 @@
             </script>
 
             <div class="card-body">
+                @if (!Model.IsActive)
+                {
+                    <p style="border: solid 3px; border-color: #ffc107; padding: 20px 10px 20px 10px;">@Html.Raw(warning)</p>
+                }
                 <div class="form-group row">
                     <div class="col-md-3">
                         <nop-label asp-for="DoNotHaveBusinessAccount" />
@@ -62,7 +73,7 @@
                         <nop-label asp-for="Password" />
                     </div>
                     <div class="col-md-9">
-                        <nop-editor asp-for="Password" />
+                        <nop-editor asp-for="Password" html-attributes="@(new { value = Model.Password })" />
                         <span asp-validation-for="Password"></span>
                     </div>
                 </div>
@@ -122,11 +133,11 @@
                 </div>
                 <div class="form-group row">
                     <div class="col-md-3">
-                        <nop-label asp-for="PaymentAction" />
+                        <nop-label asp-for="PaymentActionId" />
                     </div>
                     <div class="col-md-9">
-                        <nop-select asp-for="PaymentAction" asp-items="Model.PaymentActionOptions" />
-                        <span asp-validation-for="PaymentAction"></span>
+                        <nop-select asp-for="PaymentActionId" asp-items="Model.PaymentActionOptions" />
+                        <span asp-validation-for="PaymentActionId"></span>
                     </div>
                 </div>
                 <div class="form-group row">

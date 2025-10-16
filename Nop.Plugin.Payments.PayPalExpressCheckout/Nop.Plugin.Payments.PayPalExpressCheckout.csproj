@@ -2,22 +2,22 @@
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <Copyright>Copyright © Nop Solutions, Ltd</Copyright> 
-    <Company>Nop Solutions, Ltd</Company> 
-    <Authors>Nop Solutions, Ltd</Authors> 
-    <PackageLicenseUrl></PackageLicenseUrl> 
-    <PackageProjectUrl>https://www.nopcommerce.com/paypal-express-payment-plugin</PackageProjectUrl> 
-    <RepositoryUrl>https://github.com/nopSolutions/paypalexpress-plugin-for-nopcommerce</RepositoryUrl> 
+    <Copyright>Copyright © Nop Solutions, Ltd</Copyright>
+    <Company>Nop Solutions, Ltd</Company>
+    <Authors>Nop Solutions, Ltd</Authors>
+    <PackageLicenseUrl></PackageLicenseUrl>
+    <PackageProjectUrl>https://www.nopcommerce.com/paypal-express-payment-plugin</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/nopSolutions/paypalexpress-plugin-for-nopcommerce</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <OutputPath>$(SolutionDir)\Presentation\Nop.Web\Plugins\Payments.PayPalExpressCheckout</OutputPath>
     <OutDir>$(OutputPath)</OutDir>
     <!--Set this parameter to true to get the dlls copied from the NuGet cache to the output of your project.
     You need to set this parameter to true if your plugin has a nuget package 
     to ensure that the dlls copied from the NuGet cache to the output of your project-->
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <None Remove="logo.png" />
     <None Remove="plugin.json" />
@@ -25,9 +25,10 @@
     <None Remove="Views\Confirm.cshtml" />
     <None Remove="Views\PaymentInfo.cshtml" />
     <None Remove="Views\SetShippingMethod.cshtml" />
+    <None Remove="Views\_ViewImports.cshtml" />
   </ItemGroup>
-  
- <ItemGroup>
+
+  <ItemGroup>
     <Content Include="logo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -48,22 +49,14 @@
     </Content>
     <Content Include="Views\_ViewImports.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>    
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(SolutionDir)\Presentation\Nop.Web.Framework\Nop.Web.Framework.csproj" />
+    <ProjectReference Include="$(SolutionDir)\Presentation\Nop.Web\Nop.Web.csproj" />
     <ClearPluginAssemblies Include="$(SolutionDir)\Build\ClearPluginAssemblies.proj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="System.Drawing.Common" Version="8.0.4" />
-    <PackageReference Include="System.ServiceModel.Duplex" Version="6.0.*" />
-    <PackageReference Include="System.ServiceModel.Federation" Version="6.0.*" />
-    <PackageReference Include="System.ServiceModel.NetTcp" Version="6.0.*" />
-    <PackageReference Include="System.ServiceModel.Security" Version="6.0.*" />
-  </ItemGroup>
-  
   <!-- This target execute after "Build" target -->
   <Target Name="NopTarget" AfterTargets="Build">
     <!-- Delete unnecessary libraries from plugins path -->

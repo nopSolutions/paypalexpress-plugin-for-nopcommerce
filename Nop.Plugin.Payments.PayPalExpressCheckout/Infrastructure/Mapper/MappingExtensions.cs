@@ -1,18 +1,17 @@
 ﻿using Nop.Core.Domain.Common;
+using Nop.Plugin.Payments.PayPalExpressCheckout.Models;
 
-namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models;
+namespace Nop.Plugin.Payments.PayPalExpressCheckout.Infrastructure.Mapper;
 
 public static class MappingExtensions
 {
-
-
     public static Address ToEntity(this AddressModel model)
     {
         if (model == null)
             return null;
 
         var entity = new Address();
-        return ToEntity(model, entity);
+        return model.ToEntity(entity);
     }
 
     public static Address ToEntity(this AddressModel model, Address destination)

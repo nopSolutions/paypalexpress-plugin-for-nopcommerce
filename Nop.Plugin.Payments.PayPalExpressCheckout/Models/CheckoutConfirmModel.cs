@@ -2,7 +2,7 @@
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout.Models;
 
-public partial record CheckoutConfirmModel : BaseNopModel
+public record CheckoutConfirmModel : BaseNopModel
 {
     public CheckoutConfirmModel()
     {

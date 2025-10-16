@@ -9,21 +9,18 @@
     <p class="message-error">@error</p>
 }
 <script asp-location="Footer">
-        $(document).ready(function() {
-            $('#payPalExpressCheckoutImage').click(function() {
-                //terms of service
-                if ($('#termsofservice').length > 0) {
-                    //terms of service element exists
-                    if (!$('#termsofservice').is(':checked')) {
-                        $("#terms-of-service-warning-box").dialog();
-                    } else {
-                        setLocation('@Url.RouteUrl("Plugin.Payments.PayPalExpressCheckout.SubmitButton")');
-                    }
+    $(function() {
+        $('#payPalExpressCheckoutImage').click(function() {
+            if ($('#termsofservice').length > 0) {
+                if (!$('#termsofservice').is(':checked')) {
+                    $("#terms-of-service-warning-box").dialog();
+                } else {
+                    setLocation('@Url.RouteUrl(Defaults.Route.Submit)');
                 }
-                else {
-                    setLocation('@Url.RouteUrl("Plugin.Payments.PayPalExpressCheckout.SubmitButton")');
-                }
-            });
+            }
+            else {
+                setLocation('@Url.RouteUrl(Defaults.Route.Submit)');
+            }
         });
-
+    });
 </script>

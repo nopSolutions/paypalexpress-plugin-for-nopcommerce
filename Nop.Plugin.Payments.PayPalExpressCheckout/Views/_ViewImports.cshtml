@@ -2,12 +2,13 @@
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @addTagHelper *, Nop.Web.Framework
 
+@inject INopHtmlHelper NopHtml
+
 @using Microsoft.AspNetCore.Mvc.ViewFeatures
 @using Nop.Plugin.Payments.PayPalExpressCheckout
 @using Nop.Plugin.Payments.PayPalExpressCheckout.Models
+@using Nop.Web.Components
 @using Nop.Web.Framework.Infrastructure;
 @using Nop.Web.Framework.UI
 @using Nop.Web.Framework.Extensions
 @using System.Text.Encodings.Web
-
-@inject INopHtmlHelper NopHtml

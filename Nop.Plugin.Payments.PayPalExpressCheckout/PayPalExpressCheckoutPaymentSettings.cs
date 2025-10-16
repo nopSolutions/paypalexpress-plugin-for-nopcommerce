@@ -1,5 +1,4 @@
 ﻿using Nop.Core.Configuration;
-using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout;
 
@@ -56,9 +55,9 @@ public class PayPalExpressCheckoutPaymentSettings : ISettings
     public bool RequireConfirmedShippingAddress { get; set; }
 
     /// <summary>
-    /// Gets or sets a payment Action
+    /// Gets or sets a payment action
     /// </summary>
-    public PaymentActionCodeType PaymentAction { get; set; }
+    public string PaymentAction { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether to enable debug logging

@@ -1,16 +1,14 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Core.Http.Extensions;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Components;
-using Nop.Plugin.Payments.PayPalExpressCheckout.Helpers;
-using Nop.Plugin.Payments.PayPalExpressCheckout.PayPalAPI;
 using Nop.Plugin.Payments.PayPalExpressCheckout.Services;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Payments;
 using Nop.Services.Plugins;
+using Nop.Web.Framework.Mvc.Routing;
 
 namespace Nop.Plugin.Payments.PayPalExpressCheckout;
 
@@ -18,14 +16,12 @@ public class PayPalExpressCheckoutPaymentProcessor : BasePlugin, IPaymentMethod
 {
     #region Fields
 
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILocalizationService _localizationService;
-    private readonly ISession _session;
+    private readonly INopUrlHelper _nopUrlHelper;
     private readonly ISettingService _settingService;
-    private readonly IWebHelper _webHelper;
     private readonly PayPalExpressCheckoutPaymentSettings _payPalExpressCheckoutPaymentSettings;
-    private readonly PayPalInterfaceService _payPalInterfaceService;
-    private readonly PayPalRequestService _payPalRequestService;
-    private readonly PayPalSecurityService _payPalSecurityService;
+    private readonly PayPalExpressCheckoutService _payPalExpressCheckoutService;
 
     #endregion
 
@@ -33,21 +29,17 @@ public class PayPalExpressCheckoutPaymentProcessor : BasePlugin, IPaymentMethod
 
     public PayPalExpressCheckoutPaymentProcessor(IHttpContextAccessor httpContextAccessor,
         ILocalizationService localizationService,
+        INopUrlHelper nopUrlHelper,
         ISettingService settingService,
-        IWebHelper webHelper,
         PayPalExpressCheckoutPaymentSettings payPalExpressCheckoutPaymentSettings,
-        PayPalInterfaceService payPalInterfaceService,
-        PayPalRequestService payPalRequestService,
-        PayPalSecurityService payPalSecurityService)
+        PayPalExpressCheckoutService payPalExpressCheckoutService)
     {
-        _session = httpContextAccessor.HttpContext?.Session;
+        _httpContextAccessor = httpContextAccessor;
         _localizationService = localizationService;
+        _nopUrlHelper = nopUrlHelper;
         _settingService = settingService;
-        _webHelper = webHelper;
         _payPalExpressCheckoutPaymentSettings = payPalExpressCheckoutPaymentSettings;
-        _payPalInterfaceService = payPalInterfaceService;
-        _payPalRequestService = payPalRequestService;
-        _payPalSecurityService = payPalSecurityService;
+        _payPalExpressCheckoutService = payPalExpressCheckoutService;
     }
 
     #endregion
@@ -64,35 +56,31 @@ public class PayPalExpressCheckoutPaymentProcessor : BasePlugin, IPaymentMethod
     /// </returns>
     public async Task<ProcessPaymentResult> ProcessPaymentAsync(ProcessPaymentRequest processPaymentRequest)
     {
-        var customSecurityHeaderType = _payPalSecurityService.GetRequesterCredentials();
-        using var payPalApiaaInterfaceClient = _payPalInterfaceService.GetAAService();
-        var doExpressCheckoutPaymentResponseType = payPalApiaaInterfaceClient.DoExpressCheckoutPayment(ref customSecurityHeaderType,
-            await _payPalRequestService.GetDoExpressCheckoutPaymentRequestAsync(processPaymentRequest));
-        await _session.SetAsync(Defaults.CheckoutPaymentResponseTypeKey, doExpressCheckoutPaymentResponseType);
+        var credentials = _payPalExpressCheckoutService.GetCredentials(_payPalExpressCheckoutPaymentSettings);
+        using var client = _payPalExpressCheckoutService.GetAAClient(_payPalExpressCheckoutPaymentSettings);
+        var request = await _payPalExpressCheckoutService.GetDoExpressCheckoutPaymentRequestAsync(processPaymentRequest);
+        var response = client.DoExpressCheckoutPayment(ref credentials, request);
 
-        return await doExpressCheckoutPaymentResponseType.HandleResponseAsync(new ProcessPaymentResult(),
-            (paymentResult, type) =>
+        await _httpContextAccessor.HttpContext.Session.SetAsync(Defaults.CheckoutPaymentResponseTypeKey, response);
+
+        return await _payPalExpressCheckoutService.HandleResponseAsync(_payPalExpressCheckoutPaymentSettings,
+            response, new ProcessPaymentResult(),
+            onSuccess: (paymentResult, type) =>
             {
-                paymentResult.NewPaymentStatus =
-                    _payPalExpressCheckoutPaymentSettings.PaymentAction == PaymentActionCodeType.Authorization
-                        ? PaymentStatus.Authorized
-                        : PaymentStatus.Paid;
-
-                paymentResult.AuthorizationTransactionId =
-                    processPaymentRequest.CustomValues[Defaults.PaypalTokenKey].ToString();
-                var paymentInfoType = type.DoExpressCheckoutPaymentResponseDetails.PaymentInfo.FirstOrDefault();
-
-                if (paymentInfoType != null) 
-                    paymentResult.CaptureTransactionId = paymentInfoType.TransactionID;
+                paymentResult.NewPaymentStatus = _payPalExpressCheckoutService.GetStatusByPaymentAction(_payPalExpressCheckoutPaymentSettings);
+                if (string.Equals(_payPalExpressCheckoutPaymentSettings.PaymentAction, "Authorization", StringComparison.InvariantCultureIgnoreCase))
+                    paymentResult.AuthorizationTransactionId = type.DoExpressCheckoutPaymentResponseDetails.PaymentInfo?.FirstOrDefault()?.TransactionID;
+                else
+                    paymentResult.CaptureTransactionId = type.DoExpressCheckoutPaymentResponseDetails.PaymentInfo?.FirstOrDefault()?.TransactionID;
 
                 paymentResult.CaptureTransactionResult = type.Ack.ToString();
             },
-            (paymentResult, type) =>
+            onFailure: (paymentResult, type) =>
             {
                 paymentResult.NewPaymentStatus = PaymentStatus.Pending;
-                type.Errors.AddErrors(paymentResult.AddError);
+                _payPalExpressCheckoutService.AddErrors(type.Errors, paymentResult.AddError);
                 paymentResult.AddError(type.DoExpressCheckoutPaymentResponseDetails.RedirectRequired);
-            }, processPaymentRequest.OrderGuid);
+            });
     }
 
     /// <summary>
@@ -144,27 +132,23 @@ public class PayPalExpressCheckoutPaymentProcessor : BasePlugin, IPaymentMethod
     /// </returns>
     public async Task<CapturePaymentResult> CaptureAsync(CapturePaymentRequest capturePaymentRequest)
     {
-        var customSecurityHeaderType = _payPalSecurityService.GetRequesterCredentials();
-        using var payPalApiaaInterfaceClient = _payPalInterfaceService.GetAAService();
-        var doCaptureReq = await _payPalRequestService.GetDoCaptureRequestAsync(capturePaymentRequest);
-        var response = payPalApiaaInterfaceClient.DoCapture(ref customSecurityHeaderType, doCaptureReq);
+        var credentials = _payPalExpressCheckoutService.GetCredentials(_payPalExpressCheckoutPaymentSettings);
+        using var client = _payPalExpressCheckoutService.GetAAClient(_payPalExpressCheckoutPaymentSettings);
+        var request = await _payPalExpressCheckoutService.GetDoCaptureRequestAsync(capturePaymentRequest);
+        var response = client.DoCapture(ref credentials, request);
 
-        return await response.HandleResponseAsync(new CapturePaymentResult
-            {
-                CaptureTransactionId =
-                    capturePaymentRequest.Order.CaptureTransactionId
-            },
-            (paymentResult, type) =>
+        return await _payPalExpressCheckoutService.HandleResponseAsync(_payPalExpressCheckoutPaymentSettings,
+            response, new CapturePaymentResult(),
+            onSuccess: (paymentResult, type) =>
             {
                 paymentResult.NewPaymentStatus = PaymentStatus.Paid;
                 paymentResult.CaptureTransactionResult = response.Ack.ToString();
+                paymentResult.CaptureTransactionId = response.DoCaptureResponseDetails?.PaymentInfo?.TransactionID
+                    ?? capturePaymentRequest.Order.AuthorizationTransactionId;
 
-                if (type.DoCaptureResponseDetails.PaymentInfo is PaymentInfoType pInfoType)
-                    paymentResult.CaptureTransactionId = pInfoType.TransactionID;
             },
-            (paymentResult, type) =>
-                response.Errors.AddErrors(paymentResult.AddError),
-            capturePaymentRequest.Order.OrderGuid);
+            onFailure: (paymentResult, type) => _payPalExpressCheckoutService.AddErrors(response.Errors, paymentResult.AddError),
+            order: capturePaymentRequest.Order);
     }
 
     /// <summary>
@@ -177,19 +161,18 @@ public class PayPalExpressCheckoutPaymentProcessor : BasePlugin, IPaymentMethod
     /// </returns>
     public async Task<RefundPaymentResult> RefundAsync(RefundPaymentRequest refundPaymentRequest)
     {
-        var customSecurityHeaderType = _payPalSecurityService.GetRequesterCredentials();
-        using var payPalApiInterfaceClient = _payPalInterfaceService.GetService();
-        var response = payPalApiInterfaceClient.RefundTransaction(ref customSecurityHeaderType,
-            await _payPalRequestService.GetRefundTransactionRequestAsync(refundPaymentRequest));
+        var credentials = _payPalExpressCheckoutService.GetCredentials(_payPalExpressCheckoutPaymentSettings);
+        using var client = _payPalExpressCheckoutService.GetClient(_payPalExpressCheckoutPaymentSettings);
+        var request = await _payPalExpressCheckoutService.GetRefundTransactionRequestAsync(refundPaymentRequest);
+        var response = client.RefundTransaction(ref credentials, request);
 
-        return await response.HandleResponseAsync(new RefundPaymentResult(),
-            (paymentResult, type) =>
-                paymentResult.NewPaymentStatus = refundPaymentRequest.IsPartialRefund
-                    ? PaymentStatus.PartiallyRefunded
-                    : PaymentStatus.Refunded,
-            (paymentResult, type) =>
-                response.Errors.AddErrors(paymentResult.AddError),
-            refundPaymentRequest.Order.OrderGuid);
+        return await _payPalExpressCheckoutService.HandleResponseAsync(_payPalExpressCheckoutPaymentSettings,
+            response, new RefundPaymentResult(),
+            onSuccess: (paymentResult, type) => paymentResult.NewPaymentStatus = refundPaymentRequest.IsPartialRefund
+                ? PaymentStatus.PartiallyRefunded
+                : PaymentStatus.Refunded,
+            onFailure: (paymentResult, type) => _payPalExpressCheckoutService.AddErrors(response.Errors, paymentResult.AddError),
+            order: refundPaymentRequest.Order);
     }
 
     /// <summary>
@@ -202,18 +185,16 @@ public class PayPalExpressCheckoutPaymentProcessor : BasePlugin, IPaymentMethod
     /// </returns>
     public async Task<VoidPaymentResult> VoidAsync(VoidPaymentRequest voidPaymentRequest)
     {
-        var customSecurityHeaderType = _payPalSecurityService.GetRequesterCredentials();
+        var credentials = _payPalExpressCheckoutService.GetCredentials(_payPalExpressCheckoutPaymentSettings);
+        using var client = _payPalExpressCheckoutService.GetAAClient(_payPalExpressCheckoutPaymentSettings);
+        var request = _payPalExpressCheckoutService.GetVoidRequest(voidPaymentRequest);
+        var response = client.DoVoid(ref credentials, request);
 
-        using var payPalApiaaInterfaceClient = _payPalInterfaceService.GetAAService();
-        var response = payPalApiaaInterfaceClient.DoVoid(ref customSecurityHeaderType,
-            _payPalRequestService.GetVoidRequest(voidPaymentRequest));
-
-        return await response.HandleResponseAsync(new VoidPaymentResult(),
-            (paymentResult, type) =>
-                paymentResult.NewPaymentStatus = PaymentStatus.Voided,
-            (paymentResult, type) =>
-                response.Errors.AddErrors(paymentResult.AddError),
-            voidPaymentRequest.Order.OrderGuid);
+        return await _payPalExpressCheckoutService.HandleResponseAsync(_payPalExpressCheckoutPaymentSettings,
+            response, new VoidPaymentResult(),
+            onSuccess: (paymentResult, type) => paymentResult.NewPaymentStatus = PaymentStatus.Voided,
+            onFailure: (paymentResult, type) => _payPalExpressCheckoutService.AddErrors(response.Errors, paymentResult.AddError),
+            order: voidPaymentRequest.Order);
     }
 
     /// <summary>
@@ -226,16 +207,15 @@ public class PayPalExpressCheckoutPaymentProcessor : BasePlugin, IPaymentMethod
     /// </returns>
     public async Task<ProcessPaymentResult> ProcessRecurringPaymentAsync(ProcessPaymentRequest processPaymentRequest)
     {
-        using var payPalApiaaInterfaceClient = _payPalInterfaceService.GetAAService();
-        var customSecurityHeaderType = _payPalSecurityService.GetRequesterCredentials();
-        var response =
-            payPalApiaaInterfaceClient.CreateRecurringPaymentsProfile(ref customSecurityHeaderType,
-                await _payPalRequestService.GetCreateRecurringPaymentsProfileRequestAsync(processPaymentRequest));
+        var credentials = _payPalExpressCheckoutService.GetCredentials(_payPalExpressCheckoutPaymentSettings);
+        using var client = _payPalExpressCheckoutService.GetAAClient(_payPalExpressCheckoutPaymentSettings);
+        var request = await _payPalExpressCheckoutService.GetCreateRecurringPaymentsProfileRequestAsync(processPaymentRequest);
+        var response = client.CreateRecurringPaymentsProfile(ref credentials, request);
 
-        return await response.HandleResponseAsync(new ProcessPaymentResult(),
-            (paymentResult, type) => paymentResult.NewPaymentStatus = PaymentStatus.Pending,
-            (paymentResult, type) => response.Errors.AddErrors(paymentResult.AddError),
-            processPaymentRequest.OrderGuid);
+        return await _payPalExpressCheckoutService.HandleResponseAsync(_payPalExpressCheckoutPaymentSettings,
+            response, new ProcessPaymentResult(),
+            onSuccess: (paymentResult, type) => paymentResult.NewPaymentStatus = PaymentStatus.Pending,
+            onFailure: (paymentResult, type) => _payPalExpressCheckoutService.AddErrors(response.Errors, paymentResult.AddError));
     }
 
     /// <summary>
@@ -248,15 +228,16 @@ public class PayPalExpressCheckoutPaymentProcessor : BasePlugin, IPaymentMethod
     /// </returns>
     public async Task<CancelRecurringPaymentResult> CancelRecurringPaymentAsync(CancelRecurringPaymentRequest cancelPaymentRequest)
     {
-        var customSecurityHeaderType = _payPalSecurityService.GetRequesterCredentials();
-        using var payPalApiaaInterfaceClient = _payPalInterfaceService.GetAAService();
-        var response = payPalApiaaInterfaceClient.ManageRecurringPaymentsProfileStatus(ref customSecurityHeaderType,
-            _payPalRequestService.GetCancelRecurringPaymentRequest(cancelPaymentRequest));
+        var credentials = _payPalExpressCheckoutService.GetCredentials(_payPalExpressCheckoutPaymentSettings);
+        using var client = _payPalExpressCheckoutService.GetAAClient(_payPalExpressCheckoutPaymentSettings);
+        var request = _payPalExpressCheckoutService.GetCancelRecurringPaymentRequest(cancelPaymentRequest);
+        var response = client.ManageRecurringPaymentsProfileStatus(ref credentials, request);
 
-        return await response.HandleResponseAsync(new CancelRecurringPaymentResult(),
-            (paymentResult, type) => { },
-            (paymentResult, type) => response.Errors.AddErrors(paymentResult.AddError),
-            cancelPaymentRequest.Order.OrderGuid);
+        return await _payPalExpressCheckoutService.HandleResponseAsync(_payPalExpressCheckoutPaymentSettings,
+            response, new CancelRecurringPaymentResult(),
+            onSuccess: (paymentResult, type) => { },
+            onFailure: (paymentResult, type) => _payPalExpressCheckoutService.AddErrors(response.Errors, paymentResult.AddError),
+            order: cancelPaymentRequest.Order);
     }
 
     /// <summary>
@@ -277,7 +258,7 @@ public class PayPalExpressCheckoutPaymentProcessor : BasePlugin, IPaymentMethod
     /// </summary>
     public override string GetConfigurationPageUrl()
     {
-        return $"{_webHelper.GetStoreLocation()}Admin/PaymentPayPalExpressCheckout/Configure";
+        return _nopUrlHelper.RouteUrl(Defaults.Route.Configuration);
     }
 
     /// <summary>
@@ -380,7 +361,6 @@ public class PayPalExpressCheckoutPaymentProcessor : BasePlugin, IPaymentMethod
 
         await base.UninstallAsync();
     }
-        
 
     #endregion
 

@@ -21,6 +21,7 @@ using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
+using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Orders;
@@ -541,15 +542,6 @@ public class PayPalExpressCheckoutService
 
         details.CreditCard = new CreditCardDetailsType
         {
-            CreditCardNumber = processPaymentRequest.CreditCardNumber,
-            CreditCardType = Enum.TryParse<CreditCardTypeType>(processPaymentRequest.CreditCardType, out var creditCardTypeType)
-                ? creditCardTypeType
-                : CreditCardTypeType.Visa,
-            ExpMonthSpecified = true,
-            ExpMonth = processPaymentRequest.CreditCardExpireMonth,
-            ExpYearSpecified = true,
-            ExpYear = processPaymentRequest.CreditCardExpireYear,
-            CVV2 = processPaymentRequest.CreditCardCvv2,
             CardOwner = new PayerInfoType { PayerCountry = payPalCountry },
             CreditCardTypeSpecified = true
         };
